@@ -2,7 +2,7 @@
 
 Курс по разработке под Android на Kotlin для студентов ЯрГУ им. П.Г. Демидова.
 
-Каталог `lectures` содержит конспекты читаемых лекций.
+Каталог `lectures` содержит конспекты читаемых лекций.  
 В остальных каталогах располагаются разбираемые на занятиях примеры.
 
 Курс основан на Udacity-курсе "Developing Android Apps with Kotlin" от Google: https://classroom.udacity.com/courses/ud9012.
