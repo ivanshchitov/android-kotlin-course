@@ -538,7 +538,48 @@ data class User(val name: String, val age: Int)
 
 ## Интерфейсы
 
+Интерфейсы в Kotlin очень похожи на интерфейсы в Java. Основное отличие — интерфейсы могут содержать методы с реализацией.
+Интерфейс определяется ключевым словом `interface`:
+
+```java
+interface MyInterface {
+    fun bar()
+    fun foo() {
+      // тело
+    }
+}
+```
+
+Класс или объект могут реализовать любое количество интерфейсов:
+```java
+class Child : MyInterface {
+    override fun bar() {
+        // тело
+    }
+}
+```
+
+В интерфейсах могут быть объявлены свойства. Свойство, объявленное в интерфейсе, может быть либо абстрактным, либо иметь свою реализацию методов доступа (геттеров и сеттеров).
+
+```java
+interface MyInterface {
+    val prop: Int // абстрактное свойство
+
+    val propertyWithImplementation: String
+        get() = "foo"
+
+    fun foo() {
+        print(prop)
+    }
+}
+
+class Child : MyInterface {
+    override val prop: Int = 29
+}
+```
+
 ## Null-безопасность
+
 
 ## Создать проект в IntelliJ IDEA
 
