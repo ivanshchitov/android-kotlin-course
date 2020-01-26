@@ -139,7 +139,7 @@ class MainActivity : AppCompatActivity() {
 </LinearLayout>
 ```
 
-**2. Добавление кнопки (тэга `Button`):**
+**2. Добавление кнопки (тега `Button`):**
 
 ```xml
 <Button
@@ -154,7 +154,7 @@ class MainActivity : AppCompatActivity() {
 
 **3. Расположение элементов в центре экрана:**
 
-Для расположения элементов в центре экрана необходимо добавить следующие параметры к тэгу `LinearLayout`.  
+Для расположения элементов в центре экрана необходимо добавить следующие параметры к тегу `LinearLayout`.  
 Параметр `layout_gravity="center_vertical"` располагает компонент `LinearLayout` в центре по вертикали экрана.  
 Параметр `orientation` определяет ориентацию расположения элементов внутри `LinearLayout`.
 
@@ -239,3 +239,93 @@ rollButton.setOnClickListener {
 ```
 
 ## Сборка и управление зависимостями
+
+Сборкой Android-приложений занимается утилита Gradle. Кроме сборки Gradle отвечает за следующее:
+
+* Определяет какие устройства, могут запустить данное приложение.
+* Компилирует код в исполняемый файл приложения.
+* Управляет зависимостями приложения.
+* Подписывает приложения специальными ключами для публикации в Google Play.
+* Собирает и запускает автоматические тесты.
+
+Главная задача Gradle — сборка проекта. Gradle в процессе сборки компилирует исходный код (`*java`- и `*kt`-файлы), берет файлы ресурсов, скомпилированный код, манифест (`AndroidManifest.xml`), внешние использующиеся библиотеки, если они есть, и упаковывает все эти файлы в один APK-файл (Android Application Package) — исполняемый формат файлов для распространения Android-приложений.
+
+В каждом проекте располагается как минимум два конфигурационных файла Gradle. Каждый обладает именем `build.gradle`. Один из файлов располагается в корне проекта и является конфигурационным файлом всего проекта. Второй располагается в корне модуля `app` и является соответственно конфигурационным файлов модуля. Если проект содержит больше чем 1 модуль, то и Gradle-файлов модулей больше — по одному на каждый модуль.
+
+Gradle-файл проекта определяет репозитории и зависимости общие для всех модулей в проекте.  
+Репозитории — хранилища, в которых будут искаться добавляемые зависимости.  
+Зависимости — библиотеки или инструменты, которые необходимы для работы проекта.
+
+Например, код ниже демонстрирует Gradle-файл проекта, создающийся по-умолчанию. Здесь описаны репозитории `google()` и `jcenter()`, использующиеся для доступа к зависимостям во всех модулях проекта. В качестве зависимостей здесь указаны идентификаторы Android Build Tools — инструментов для сборки Android-проектов, а также Kotlin-плагин для Gradle. Очевидно, обе эти зависимости необходимы для проекта в целом.
+
+```gradle
+buildscript {
+    ext.kotlin_version = '1.3.50'
+    repositories {
+        google()
+        jcenter()
+        
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.3'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        
+    }
+}
+```
+
+Пример `build.gradle` для модуля `app` представлен ниже.
+
+```gradle
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "org.example.diceroller"
+        minSdkVersion 19
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.core:core-ktx:1.0.2'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+}
+```
+
+Директивы `apply plugin` описывают плгины, которые должны быть включены в проект:
+* `com.android.application` — объявляет проект как Android-приложение.
+* `kotlin-android` — включает использование языка Kotlin для Android-проекта.
+* `kotlin-android-extensions` — включает использование расширений для Android-проекта на Kotlin.
+
+Блок `android` описывает параметры сборки проекта под Android: 
+* `compileSdkVersion` — уровень Android API для компиляции. Должно совпадать с `targetSdkVersion`.
+* `applicationId` — уникальный идентификатор пакета приложения для публикации в системе Android.
+* `minSdkVersion` — минимальный уровень Android API требуемый для работы приложения.
+* `targetSdkVersion` — целевой уровень Android API требуемый для работы приложения.
+* `versionCode` — кодовое число версии приложения. Используется для идентификации версии приложения в системе Android.
+* `versionName` — текстовое название версии приложения. Версия, которая показывается пользователю.
+* `buildTypes` — блок, описывающий параметры сборки и цифровой подписи приложения.
+
+Блок `dependencies` описывает зависимости от библиотек, необходимых приложению. Зависимости задаются идентификаторами библиотек в репозиториях, включенных в Gradle-файле проекта.
