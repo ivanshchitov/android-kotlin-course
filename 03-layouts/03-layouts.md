@@ -50,7 +50,7 @@
 4. Design editor — основное окно редактора, отображающее макет с компонентами.
 5. Attributes — панель с доступными свойствами и атрибутами текущего выбранного компонента с возможностью их редактирования.
 
-![layout editor image](https://developer.android.com/images/studio/write/layout-editor-2x.png)
+![layout editor image](layout-editor.png)
 
 Для добавления новых компонентов из **Palette** можно переносить их как на макет в **Design editor**, так и в определенное место иерархии на **Component Tree**.
 
