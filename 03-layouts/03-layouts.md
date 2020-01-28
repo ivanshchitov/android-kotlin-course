@@ -71,7 +71,7 @@
 На панели **Attributes** установить следующие параметры:
 * `id` = **name_text** — идентификатор элемента.
 * `layout_width` = **match_parent** — ширина элемента по ширине родителя, т.е. макета `LinearLayout`.
-* `layout_width` = **wrap_content** — высота элемента по высоте контента, т.е. отображаемого текста.
+* `layout_height` = **wrap_content** — высота элемента по высоте контента, т.е. отображаемого текста.
 * `text` = **Steve Jobs** — отображаемый текст.
 * `textSize` = **20sp** — размер шрифта, указывается в **sp** (scale-independent pixels) независимых от масштабирования пикселях.
 * `textColor` = **@android:color/black** — стандартный черный цвет.
@@ -158,7 +158,85 @@ android:paddingEnd="@dimen/padding"
 
 ### Добавление `EditText`
 
+Перейдем к добавлению текстового поля для ввода никнейма.
+
+Необходимо добавить элемент `EditText` на макет сразу после элемента `TextView` с именем (**id=name_text**). Можно сделать это вручную в XML, можно в редакторе макетов путем переноса элемента из панели **Palette** на панель **Component Tree**.
+
+Для элемента `EditText` необхоидмо задать атрибуты:
+* `id` = **nickname_edit_text**,
+* `layout_width` = **match_parent**,
+* `layout_height` = **wrap_content**,
+* `style` = **@style/NameStyle** — ссылка на стиль "NameStyle",
+* `textAlignment` = **center**,
+* `hint` = **@string/what_is_your_nickname** — подсказка для ввода текста, отображается в поле полупрозрачным шрифтом, ссылка на строковый ресурс с строкой "What is your nickname?" (строку необходимо предварительно добавить).
+
+Итоговый элемент должен быть следующим:
+
+```xml
+<EditText
+    android:id="@+id/nickname_edit_text"
+    style="@style/NameStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="@string/what_is_your_nickname"
+    android:textAlignment="center" />
+```
+
 ### Добавление `Button`
+
+Ввод никнейма не должен быть бесполезным. Логично было бы его принять и отобразить как текст. Для этого необходимо добавить еще одно текстовое поле `TextView` для отображения никнейма, а также кнопку `Button` для принятия введенного в `EditText` никнейма и отображения его на новом `TextView`.
+
+Спева добавим кнопку для принятия введенного никнейма. Кнопку требуется расположить следом за текстовым полем `EditText`. Кнопке присваиваются следующие атрибуты:
+* `id` = **done_button**,
+* `layout_width` = **wrap_content**,
+* `layout_height` = **wrap_content**,
+* `layout_gravity` = **center_horizontal** — расопложить кнопку в центре по горизонтали относительно макета,
+* `fontFamily` = **sans-serif**,
+* `text` = **@string/done** — ссылка на строковый ресурс с текстом "Done",
+* `style` = **@style/Widget.AppCompat.Button.Colored** — ссылка на стандартный стиль, позволяющий делать кнопку цветной.
+
+Итоговый элемент:
+
+```xml
+<Button
+    android:id="@+id/done_button"
+    style="@style/Widget.AppCompat.Button.Colored"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginTop="@dimen/layout_margin"
+    android:fontFamily="sans-serif"
+    android:text="@string/done" />
+```
+
+Для отображения введенного никнейма потребуется еще один элемент `TextView`. Добавить его необходимо после кнопки "Done". Новый `TextView` имеет абсолютно идентичные атрибуты, что и текстовое поле с `id` **name_text**.  
+Отличия: `id`=**nickname_text** и `visibility`=**gone** (скрыть текстовое поле по умолчанию).
+
+Далее необхоидмо добавить обработчик события нажатия на кнопку "Done", который будет текст из `EditText` помещать в текстовое поле **nickname_text** и скрывать ненужный `EditText`.
+
+**Добавление обработчкика нажатия на кнопку:** 
+
+```java
+// внутри MainActivity::onCreate
+findViewById<Button>(R.id.done_button).setOnClickListener {
+   addNickname(it)
+}
+
+// приватный метод класса MainActivity
+private fun addNickname(view: View) {
+	val editText = findViewById<EditText>(R.id.nickname_edit_text)
+	val nicknameTextView = findViewById<TextView>(R.id.nickname_text)
+
+	nicknameTextView.text = editText.text
+	editText.visibility = View.GONE // скрывает поле для ввода никнейма
+	view.visibility = View.GONE // скрываем кнопку "Done"
+	nicknameTextView.view = View.VISIBLE // отображаем поле с введенным никнеймом
+
+	// Скрыть клавиатуру после нажатия на кнопку
+	val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+	imm.hideSoftInputFromWindow(view.windowToken, 0)
+}
+```
 
 ## Data Binding
 
