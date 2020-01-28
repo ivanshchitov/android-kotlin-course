@@ -219,22 +219,22 @@ android:paddingEnd="@dimen/padding"
 ```java
 // внутри MainActivity::onCreate
 findViewById<Button>(R.id.done_button).setOnClickListener {
-   addNickname(it)
+    addNickname(it)
 }
 
 // приватный метод класса MainActivity
 private fun addNickname(view: View) {
-	val editText = findViewById<EditText>(R.id.nickname_edit_text)
-	val nicknameTextView = findViewById<TextView>(R.id.nickname_text)
+    val editText = findViewById<EditText>(R.id.nickname_edit_text)
+    val nicknameTextView = findViewById<TextView>(R.id.nickname_text)
 
-	nicknameTextView.text = editText.text
-	editText.visibility = View.GONE // скрывает поле для ввода никнейма
-	view.visibility = View.GONE // скрываем кнопку "Done"
-	nicknameTextView.view = View.VISIBLE // отображаем поле с введенным никнеймом
+    nicknameTextView.text = editText.text
+    editText.visibility = View.GONE // скрывает поле для ввода никнейма
+    view.visibility = View.GONE // скрываем кнопку "Done"
+    nicknameTextView.view = View.VISIBLE // отображаем поле с введенным никнеймом
 
-	// Скрыть клавиатуру после нажатия на кнопку
-	val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-	imm.hideSoftInputFromWindow(view.windowToken, 0)
+    // Скрыть клавиатуру после нажатия на кнопку
+    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    imm.hideSoftInputFromWindow(view.windowToken, 0)
 }
 ```
 
