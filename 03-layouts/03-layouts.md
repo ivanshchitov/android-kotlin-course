@@ -224,11 +224,11 @@ findViewById<Button>(R.id.done_button).setOnClickListener {
 
 // приватный метод класса MainActivity
 private fun addNickname(view: View) {
-    val editText = findViewById<EditText>(R.id.nickname_edit_text)
+    val nicknameEditText = findViewById<EditText>(R.id.nickname_edit_text)
     val nicknameTextView = findViewById<TextView>(R.id.nickname_text)
 
-    nicknameTextView.text = editText.text
-    editText.visibility = View.GONE // скрывает поле для ввода никнейма
+    nicknameTextView.text = nicknameEditText.text
+    nicknameEditText.visibility = View.GONE // скрывает поле для ввода никнейма
     view.visibility = View.GONE // скрываем кнопку "Done"
     nicknameTextView.view = View.VISIBLE // отображаем поле с введенным никнеймом
 
@@ -239,6 +239,134 @@ private fun addNickname(view: View) {
 ```
 
 ## Data Binding
+
+Можно заметить, что для получения каждого визуального элемента на макете необходим вызов `findViewById()`, и когда элементов становится очень много, а это неминуемо при разработке большого приложения, код становится многословным и однообразным.
+
+Data Binding поможет организовать работу с `View` так, чтобы не пришлось писать множество методов `findViewById()`. По сути Data Binding — это еще один способ доступа к View-элементам наряду с вызовом `findViewById()`.
+
+Сперва необхоидмо включить возможность использования Data Binding добавив в Gradle-файл модуля `app` в блок `android`:
+
+```gradle
+dataBinding {
+	enabled = true
+}
+```
+
+Затем, необходимо поместить макет `LinearLayour` в файле `activity_main.xml` в тэг `<layout></layout>`:
+
+```xml
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- LinearLayout code -->
+</layout>
+```
+
+Далее переключаемся в `MainActivity` и создаем поле `binding`, которое будет объектом доступа к элементам макет `activity_main`.
+
+```
+private lateinit var binding: ActivityMainBinding
+```
+
+Класс `ActivityMainBinding` сгенерирован автоматически. Имя класса берется из имени layout-файла (т.е. `activity_main`) с добавлением слова "Binding". `ActivityMainBinding` все знает о содержимом макете: какие View-элементы там есть, каких они типов, и как можно с ними взаимодействовать.
+
+Ключевое слово `lateinit` помечает поле класса как "будет проинициализировано позже". По-умолчанию Kotlin требует иницииализировать поля либо при их объявлении, либо в конструкторе класса. В данном же случае поле `binding` будет проинициализированно в методе `onCreate()`. Именно в этомметоде принятов Andorid инициализировать поля (либо при их объявлении). Поэтому здесь ключевое слово `lateinit` необходимо. В противном случае компилятор выдаст ошибку.
+
+Для возможности использования Data Binding на уровне класса `MainActivity` необходимо проинициализировать поле `binding` и указать для него макет, данные из которого необходимо использовать:
+
+```java
+binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+```
+
+Описанную выше строку необходимо добавить вместо вызова `setContentView(R.layout.activity_main)`. Метод `DataBindingUtil.setContentView()` внутри себя выполнит вызов стандартного `setContentView()` для активности, а также настроит и вернет объект `ActivityMainBinding`.
+
+Теперь можно заменить вызов `findViewById<Button>(R.id.done_button)` для получения экземпляра кнопки на `binding.doneButton`:
+
+```java
+binding.doneButton.setOnClickListener {
+    addNickname(it)
+}
+```
+
+По сути объект Data Binding предоставляет доступ к объектам интерфейса непосредственно по их идентификаторам.  
+Также можно обновить код метода `addNickname()` с использованием поля `binding`:
+
+```java
+private fun addNickname(view: View) {
+    binding.apply {
+        nicknameTextView.text = nicknameEditText.text
+        invalidateAll()
+        nicknameEditText.visibility = View.GONE
+        doneButton.visibility = View.GONE
+        nicknameText.visibility = View.VISIBLE
+    }
+    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    imm.hideSoftInputFromWindow(view.windowToken, 0)
+}
+```
+
+Вызов метода `apply` позволяет описать целый блок кода, внутри которого можно не писать каждый раз ообращение к полю `binding`.  
+Вызов метода `binding.invalidateAll()` выполняет обновление вида элементов интерфейса на макете в связи с измененными данными. Его рекомендуется вызывать после изменения каких-либо данных на макете.
+
+Кроме доступа к элементам интерфейса внутри классов есть возможность получить доступ к данным внутри элементов интерфейса на уровне XML-кода. Допустим, приложение хранит данные в отдельном классе `UserName`:
+
+```java
+data class UserName (
+    var name: String = "",
+    var nickname: String = "")
+```
+
+Для того, чтобы обратиться к полям конкретного экземпляра данного класса необхоидмо выполнить следующие шаги.
+
+**1. Добавить тэг `<data>` с описанием класса в XML-файл макета:**
+
+```xml
+<data>
+    <variable
+        name="myName"
+        type="com.example.aboutme.UserName" />
+</data>
+```
+
+Данный код объявляет переменную `userName` типа `UserName` на уровне макета. Имя класса пишется полностью вместе с именем пакета.
+
+**Схема объяления и использования переменной Data Binding в рамках XML-кода:**
+![](data-binding-xml-variable.png)
+
+**2. Заменить использование ссылки на ресурс @string/name на ссылку на переменную `userName`:**
+
+```xml
+android:text="@={userName.name}"
+```
+
+Теперь компонент `TextView`, отображающий имя из строкового ресурса, будет отображать значение поля `name` объекта `userName`.
+
+**3. Создать данные для отображения на макете с помощью Data Binding:**
+
+Для того, чтобы переменная `userName` имела какие-нибудь данные, необходимо, во первых, создать экземпляр класса `UserName`.
+
+```java
+// Поле класса MainActivity
+private val userNameFromActivity: UserName = UserName("Steve Jobs")
+```
+
+Затем необходимо проинициализировать поле `userName`, получаемое с помощью Data Binding по его имени.
+
+```java
+binding.userName = userNameFromActivity
+```
+
+Таким образомданные, содержащиеся в объекте `userNameFromActivity` (`name`="Steve Jobs") будут использоваться на уровне XML-кода макета через переменную `userName`. 
+
+Для редактирования никнейма можно также использовать возможность доступа к переменной `userName`:
+
+```java
+// nicknameTextView.text = nicknameEditText.text
+userName?.nickname = nicknameEditText.text.toString()
+```
+
+**Схема инициализации и использования переменной Data Binding в рамках Kotlin-кода:**
+![](data-binding-init-and-use-xml-variable.png)
 
 ## ConstraintLayout
 
