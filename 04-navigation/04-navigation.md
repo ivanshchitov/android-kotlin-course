@@ -42,7 +42,7 @@
 
 Обычно фрагменты имеют собственные макеты (layouts), описывающие элементы пользовательского интерфейса. Если в активностях инициализация и установка макетов выполняется в методе `onCreate()`, то в фрагментах — в методе `onCreateView()` общем для всех фрагментов. Вместо метода `setContentView()` для установки макета здесь используется метод `inflate()`, принимающий на вход ссылку на ресурс с макетом, объект `container`, являющийся родительским видом и булево значение, определяющиее нужно ли новый макет привязать к корневому (в большинстве случаев используется `false`).
 
-```java
+```kotlin
 class ExampleFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, 
@@ -92,11 +92,11 @@ class ExampleFragment : Fragment() {
 
 Определение метода `onCreateView()` должно выглядеть следующим образом:
 
-```java
+```kotlin
 override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                           savedInstanceState: Bundle?): View? {
     val binding = DataBindingUtil.inflate<FragmentTitleBinding>(
-            inflater, R.layout.fragment_title, container, false)
+    	inflater, R.layout.fragment_title, container, false)
     return binding.root
 }
 ```
