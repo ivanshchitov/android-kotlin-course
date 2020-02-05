@@ -260,5 +260,59 @@ override fun onSupportNavigateUp(): Boolean {
 
 ## ActionBar-меню
 
+Action Bar может содержать собственное меню. Обычно меню помечается кнопкой в виже трех вертикальных точек.  
+В случае приложения "Trivia" меню будет содержать один пункт "About", открывающий отдельный экран с информацией о приложении. Фрагмент `AboutFragment` уже создан.
+
+**1. Добавление фрагмента `AboutFragment` на граф навигации:**
+
+Для добавления возможности перехода к экрану "About" необходимо сперва добавить его на граф навигации.
+
+**2. Создание нового ресурса `menu`:**
+
+Конфигурация меню описывается в специальных ресурсах `menu`. Для его добавления необходимо кликнуть правой кнопкой по модулю `app`, выбрать **New** -> **Android Resource File**. Далее необходимо указать тип **Menu** и имя файла, например, **overflow_menu** и кликнуть "Ok". В результате будет создан файл `overflow_menu.xml` и помещен в каталог `res/menu`.
+
+В меню необходимо добавить новый элемент **Menu Item**.  
+На панели атрибутов указать:  
+* **ID**: `aboutFragment` — совпадает с `id` фрагмента, к которому необходимо перейти при выборе данного пункта меню (ВАЖНО, чтобы эти идентификаторы совпадали),
+* **title**: `@string/about` — ссылка на строковый ресурс.
+
+**3. Добавление меню на Action Bar фрагмента `TitleFragment`:**
+
+Для добавления меню на Action Bar фрагмента `TitleFragment` необходимо сперва добавить вызов метода `setHasOptionsMenu(true)` внутри метода `onCreateView()`. Вызов метода определяет, что данный фрагмент в принципе может отображать меню.
+
+```kotlin
+override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                         savedInstanceState: Bundle?): View? {
+   ...
+   setHasOptionsMenu(true)
+   return binding.root
+}
+```
+
+Для инициализации и установки меню из файла ресурса необходимо переопределить метод фрагмента `onCreateOptionsMenu()` и описать в нем загрузку меню из файла `overflow_menu`.
+
+```kotlin
+override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater?) {
+    super.onCreateOptionsMenu(menu, inflater)
+    inflater?.inflate(R.menu.overflow_menu, menu)
+}
+```
+
+**4. Реализация обработчика нажатия на элемент меню:**
+
+Чтобы нажатие на элемент меню "About" имело эффект, необходимо реализовать обработчик нажатия.  
+Для этого требуется переопределить метод фрагмента `onOptionsItemSelected()`.
+
+```kotlin
+override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+    return NavigationUI.onNavDestinationSelected(item!!, view!!.findNavController())
+            || super.onOptionsItemSelected(item)
+}
+```
+
+Метод `NavigationUI.onNavDestinationSelected()` выполняет навигацию к фрагменту по идентификатору меню. Именно для этого идентификаторы фрагмента и меню, по которому к фрагменту нужно перейти, важно указывать одинаковыми.
+
+По сути фрагмент `AboutFragment` имеет в графе навигации идентификатор `aboutFragment`. Добавленный пунк меню "About" имеет аналогичный идентификатор и метод `NavigationUI.onNavDestinationSelected()`, приниающий на вход элемент меню (`MenuItem`) и экземпляр `NavController` сопоставляет эти идентификаторы и выполняет переход, если это возможно. Если переход невозмоен, то метод вернет `false` и будет вызвана родительская реализация метода `super.onOptionsItemSelected(item)`.
+
 ## Интенты и передача данных через интенты
 
