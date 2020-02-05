@@ -6,7 +6,8 @@
 - [Fragments](#fragments)
 - [Реализация навигации](#реализация-навигации)
 	- [Добавление нового фрагмента](#добавление-нового-фрагмента)
-	- [Создание перехода от одного экрана к другому](#создание-перехода-от-одного-экрана-к-другому)
+	- [Добавление перехода от одного экрана к другому](#добавление-перехода-от-одного-экрана-к-другому)
+	- [Манипуляции со стеком фрагментов](#манипуляции-со-стеком-фрагментов)
 - [ActionBar-меню](#actionbar-меню)
 - [Интенты и передача данных через интенты](#интенты-и-передача-данных-через-интенты)
 
@@ -119,7 +120,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 
 После запуска приложения на экране отобразится содержимое `TitleFragment` — начальный экран с логотипом и кнопкой "Play". По нажатию на кнопку ничего не выполняется.
 
-### Создание перехода от одного экрана к другому
+### Добавление перехода от одного экрана к другому
 
 Для реализации непосредственно навигации между экранами необходимо добавить зависимость от библиотеки **Navigation Component** и создать файл с графом навигации.
 
@@ -189,7 +190,7 @@ dependencies {
 
 ```kotlin
 binding.playButton.setOnClickListener {
-	Navigation.findNavController(it).navigate(R.id.action_titleFragment_to_gameFragment)
+    Navigation.findNavController(it).navigate(R.id.action_titleFragment_to_gameFragment)
 }
 ```
 
@@ -208,6 +209,54 @@ view.findNavController().navigate(R.id.action_gameFragment_to_gameOverFragment)
 ```
 
 Теперь после запуска приложения и успешного прохождения теста будет выполнен переход к `GameWonFragment`, а в случае ошибки `GameOverFragment`.
+
+### Манипуляции со стеком фрагментов
+
+Каждый новый открытый фрагмент помещается на стек фрагментов. Например, если пользователь прошел по всем экранам приложения от начального до экрана "Gave Over", то стек фрагментов содержит `TitleFragment`, `GameFragment` и `GameOverFragment`. Последовательность именно такая.
+
+Если пользователь на экране "Game Over" нажмет на системную кнопку "Назад", то вернется к экрану с игрой, где будет написан последний вопрос, а это является некорректным поведением. Для пользователя логичным было бы попасть на начальный экран, а для этого необходимо удалить фрагмент `GameFragment` из стека фрагментов. Такое поведение можно реализовать следующим образом.
+
+**1. Настройка поведения системной кнопки "Назад":**
+
+Чтобы нажатие на системную кнопку "Назад" выполняло переход от `GameOverFragment` к `TitleFragment`, необходимо настроить атрибут **Pop Behavior**. Для этого нужно выбрать уже созданную связь между `GameFragment` и `GameOverFragment`, на панели атрибутов выбрать **Pop Behavior** -> **Pop To** -> **gameFragment** и установить галочку **Inclusive**. Настройка "поведения" определяет к какому фрагменту необходимо вернуться назад по выбранной связи (все фрагменты выше выбранного на стеке будут удалены), а галочка **Inclusive** говорит, что сам фрагмент `GameFragment` тоже нужно удалить со стека (это вернет пользователя на фрагмент `TitleFragment`).
+
+Аналогичное поведение необходимо реализовать и возврата с фрагмента `GameWщnFragment` к `TitleFragment`.
+
+**2. Добавление обработчика для кнопок на `GameOverFragment` и `GameWonFragment`:**
+
+На экранах "Game Over" и "Congratulations" есть кнопки "Try Again" и "Next Match" соответственно. Эти кнопки должны повзолять пользователю начать игру заново, т.е. возвращать пользователя к предыдущему экрану с вопросами `GameFragment`.
+
+Для этого необходимо протянуть новую связь от `GameOverFragment` к `GameFragment` и на панели атрибутов установить **Pop To** -> **titleFragment**. Затем необходимо перейти в класс `GameOverFragment` и установить обработчик кнопки "Try Again".
+
+```kotlin
+binding.tryAgainButton.setOnClickListener {
+    it.findNavController().navigate(R.id.action_gameOverFragment_to_gameFragment)
+}
+```
+
+Аналогично необходимо создать связь между `GameWonFragment` и `GameFragment`, настроить **Popup Behavior** и установить обработчик нажатия на кнопку "Match Again".
+
+**3. Добавление кнопки "Назад" на Action Bar:**
+
+Кроме системной кнопки "Назад" Android поддерживает еще и кнопку "Назад", отображающуюся на Action Bar — панели сверху приложения. Для ее добавления необходимо внести изменения в `MainActivity`. Необходимо получить экхемпляр `NavController` и использовать его для установки Action Bar:
+
+```kotlin
+val navController = this.findNavController(R.id.navHostFragment)
+NavigationUI.setupActionBarWithNavController(this, navController)
+```
+
+Далее необходимо переопределить метод активности `onSupportNavigateUp()`:
+
+```kotlin
+override fun onSupportNavigateUp(): Boolean {
+    val navController = this.findNavController(R.id.navHostFragment)
+    return navController.navigateUp()
+}
+```
+
+Метод `onSupportNavigateUp()` определяет, что именно должно быть выполнено при навигации с помощью кнопки "Назад". В данном случае это навигация по стеку с помощью экземпляра `NavController`.
+
+Если запустить приложение, можно убедиться, что кнопка "Назад" на Action Bar отображается и работает она аналогично системной кнопке "Назад.
 
 ## ActionBar-меню
 
