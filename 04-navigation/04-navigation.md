@@ -9,6 +9,7 @@
 	- [Добавление перехода от одного экрана к другому](#добавление-перехода-от-одного-экрана-к-другому)
 	- [Манипуляции со стеком фрагментов](#манипуляции-со-стеком-фрагментов)
 - [ActionBar-меню](#actionbar-меню)
+- [Navigation Drawer](#navigation-drawer)
 - [Интенты и передача данных через интенты](#интенты-и-передача-данных-через-интенты)
 
 ## Введение
@@ -313,6 +314,109 @@ override fun onOptionsItemSelected(item: MenuItem?): Boolean {
 Метод `NavigationUI.onNavDestinationSelected()` выполняет навигацию к фрагменту по идентификатору меню. Именно для этого идентификаторы фрагмента и меню, по которому к фрагменту нужно перейти, важно указывать одинаковыми.
 
 По сути фрагмент `AboutFragment` имеет в графе навигации идентификатор `aboutFragment`. Добавленный пунк меню "About" имеет аналогичный идентификатор и метод `NavigationUI.onNavDestinationSelected()`, приниающий на вход элемент меню (`MenuItem`) и экземпляр `NavController` сопоставляет эти идентификаторы и выполняет переход, если это возможно. Если переход невозмоен, то метод вернет `false` и будет вызвана родительская реализация метода `super.onOptionsItemSelected(item)`.
+
+## Navigation Drawer
+
+Еще одним из основных элементов для навигации между экранами является боковое меню, также оно называется Navigation Drawer.  
+Далее будут рассмотрены шаги по добавлению бокового меню.
+
+**1. Добавление зависимости от библиотеки Material:**
+
+Navigation Drawer является частью библиотеки Material, поэтому ее необходимо включить в Gradle-файл:
+
+```gradle
+implementation "com.google.android.material:material:$version_material"
+```
+
+**2. Добавление XML-файла бокового меню:**
+
+Далее необходимо добавить XML-файл ресурса с описанием элементов бокового меню, аналогично тому, как это было сделано для ActioBar-меню. Файл будет называться `navdrawer_menu.xml` и будет содержать один элемент "About".
+Элемент меню должен иметь следующие атрибуты:  
+* **ID**: `aboutFragment` — совпадает с идентификатором фрагмента, который должен быть открыт,
+* **Name**: `@string/about` — ссылка на строковый ресурс,
+* **Icon**: `@drawable/android` — ссылка на ресурс с изображением, ресурс уже содержится в проекте.
+
+**3. Добавление бокового меню на макет `MainActivity`:**
+
+Для возможность использования Navigation Draver необходимо добавить компонент `DrawerLayout` в активность и поместить внутрь этого компонента весь контент активности.
+
+```xml
+<androidx.drawerlayout.widget.DrawerLayout
+	android:id="@+id/drawerLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <fragment
+            android:id="@+id/navHostFragment"
+            android:name="androidx.navigation.fragment.NavHostFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:navGraph="@navigation/navigation"
+            app:defaultNavHost="true" />
+    </LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>
+```
+
+И затем добавить компонент `NavigationView` сразу после определения `LineatLayout`, внутри которого находится фрагмент.
+
+```xml
+<com.google.android.material.navigation.NavigationView
+    android:id="@+id/navView"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    app:headerLayout="@layout/nav_header"
+    app:menu="@menu/navdrawer_menu" />
+```
+
+Параметр `headerLayout` определяет какой макет использовать в качестве заглавной части меню.  
+В параметре `menu` задается ссылка на ресурс с меню, которое необходимо загрузить в `NavigationView`.
+
+**4. Инициализация и настройка Navigation Drawer:**
+
+Для инициализации и настройки работы Navigation Drawer необходимо сперва создать поле `drawerLayout` и инициализировать его в методе `onCreate()`:
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var drawerLayout: DrawerLayout
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        ...
+        val binding = DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
+        drawerLayout = binding.drawerLayout
+        ...
+    }
+}
+```
+
+Для отображения кнопки бокового меню на Action Bar необходимо добавить экземпляр `drawerLayout` в качестве третьего параметра вызова `NavigationUI.setupActionBarWithNavController()`:
+
+```kotlin
+NavigationUI.setupActionBarWithNavController(this, navController, drawerLayout)
+```
+
+Для добавления возможности навигации, т.е. перехода к экрану "About" при нажатии на соответствующие элемент бокового меню, необходимо добавить вызов `NavigationUI.setupWithNavController()` с передачей `NavController` и элемента `NavigationView` в качестве ппараметров:
+
+```kotlin
+NavigationUI.setupWithNavController(binding.navView, navController)
+```
+
+Для того, чтобы корректно обрабатывалось и открытие бокового меню и кнопка "Назад", которая отображается при переходек следующим за начальным экранам, необходимо добавит в обработчике `onSupportNavigateUp()` в вызов `NavigationUI.navigateUp()` параметры `navController` и `drawerLayout`.
+
+```kotlin
+override fun onSupportNavigateUp(): Boolean {
+    val navController = this.findNavController(R.id.navHostFragment)
+    return NavigationUI.navigateUp(navController, drawerLayout)
+}
+```
+
+В этом случае `drawerLayout` будет использоваться, если пользователь находится на последнем фрагменте в стеке. А `navController` будет использоваться для навигации в остальных случаях.
 
 ## Интенты и передача данных через интенты
 
