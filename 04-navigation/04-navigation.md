@@ -500,5 +500,5 @@ shareIntent.putExtra(Intent.EXTRA_TEXT, "This is a text to send via any sender")
 startActivity(shareIntent)
 ```
 
-Для самостоятельного добавления кнопки кнопки "Share" в приложение "Trivia" необходимо пройти урок 3 курса по Android: https://classroom.udacity.com/courses/ud9012/lessons/7466f670-3d47-4b60-8f6a-0914ce58f9ad.  
+Для самостоятельного добавления кнопки кнопки "Share" в приложение "Trivia" необходимо пройти части 21 и 23 третьего урока курса по Android: https://classroom.udacity.com/courses/ud9012/lessons/7466f670-3d47-4b60-8f6a-0914ce58f9ad/concepts/54243e22-2cc5-4763-9187-95eb0b73ef8c.  
 Части: 21 (Intents and Sharing) и 23 (Exercise: Adding Sharing with an Intent).
