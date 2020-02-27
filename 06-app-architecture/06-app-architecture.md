@@ -6,6 +6,9 @@
 - [Шаблон Model-View-ViewModel](#шаблон-model-view-viewmodel)
 - [ViewModel](#viewmodel)
 - [LiveData](#livedata)
+  - [Добавление `LiveData`](#добавление-livedata)
+  - [Инкапсуляция `LiveData`-полей](#инкапсуляция-livedata-полей)
+  - [Добавление события завершения игры](#добавление-события-завершения-игры)
 
 ## Введение
 
@@ -161,7 +164,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 
 Если на текущем этапе запустить приложение можно заметить, что игра идет, однако, не заканчивается несмотря на то, что общее число слов для игры заканчивается. Однако, если проверить смену ориентации устройства, то можно убедиться, что проблем со сбросом данных нет.
 
-**Преимущества реализации архитектуры:**
+**Преимущества:**
 
 * Код более структурированный, организованный, им проще управлять.
 * Легче отлаживать.
@@ -169,5 +172,206 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 * **ViewModel** не содержит зависимостей от фрагментов и активностей, что упрощает unit-тестирование.
 
 ## LiveData
+
+`LiveData` — это класс для хранения данных, который работает по принципу шаблона Observer (наблюдатель), т.е, этот класс позволяет отслеживать изменение данных. `LiveData` позволяет следующее:
+
+1. Помещать какой-либо объект в хранилище.
+2. Подписаться на обновления объекта и получать его обратно.
+
+Обычно подписчиками `LiveData` являются активности и фрагменты. В применении к приложению, подписчиком будет `GameFragment`. Он будет подписываться на изменения очков (поля `score`) в `LiveData` и когда это значение будет изменяться, автоматически будет вызываться метод `updateScoreText()` для обновления значения на экране. При этом тип поля `score` нужно будет заменить с `Int` на шаблонный класс `MutableLiveData<Int>`.
+
+![](livedata.png)
+
+Далее перейдем к преобразованию кода.
+
+## Добавление `LiveData`
+
+**1. Использование `MutableLivaData` как тип для `word` и `score`:**
+
+Значение по умолчанию можно передавать в конструктор.
+
+```kotlin
+var word = MutableLiveData<String>("")
+var score = MutableLiveData<Int>(0)
+```
+
+**2. Изменить использование `word` и `score` на `word.value` и `score.value`:**
+
+```kotlin
+// GameViewModel
+
+fun onSkip() {
+    score.value = score.value?.minus(1)
+    nextWord()
+}
+
+fun onCorrect() {
+    score.value = score.value?.plus(1)
+    nextWord()
+}
+```
+
+```kotlin
+// GameFragment
+
+private fun gameFinished() {
+    val action = GameFragmentDirections.actionGameToScore(viewModel.score.value ?: 0)
+    findNavController(this).navigate(action)
+}
+private fun updateWordText() {
+    binding.wordText.text = viewModel.word.value
+}
+
+private fun updateScoreText() {
+    binding.scoreText.text = viewModel.score.value.toString()
+}
+```
+
+**3. Настроить подписку на изменение значений `word` и `score`:**
+
+```kotlin
+viewModel.word.observe(viewLifecycleOwner, Observer { newWord ->
+    binding.wordText.text = newWord
+})
+viewModel.score.observe(viewLifecycleOwner, Observer {newScore ->
+    binding.scoreText.text = newScore.toString()
+})
+```
+
+Код выше описывает механизм подписки на изменение значений `LiveData` с помощью метода `observe()`.  
+Первым параметром передается экземпляр объекта, отвечающего за жизненный цикл. Для фрагментов это стандартное свойство `viewLifecycleOwner`, для активности — это будет сам экземпляр активности.  
+Вторым параметром указывается объект `Observer`, описывающий код, который должен выполнится, когда значение изменилось. Блок — это описание тема метода-обработчика `onChanged()` интерфейса `Observer`. В данном случае при изменении текущего слова, выполняется установка нового слова в текстовое поле `TextView`, а в случае изменения числа очков то же самое выполнится для второго текстового поля.
+
+После этого изменения можно удалить все упоминания о методах `updateWordText()` и `updateScoreText()` и приложение должно работать, как и раньше.
+
+Несколько слов о работе `LiveData` в рамках жизненного цикла:
+
+* `LiveData` знает о существовании жизненного цикла.
+* Когда **View** не отображается/свернуто/скрыто, `LiveData` обновляет данные внутри себя, но не посылает обновления на **View**.
+* Когда **View** становится снова видимым, `LiveData` автоматически посылает текущие хранимые данные.
+* Когда **View** уничтожается, `LiveData` автоматически очищает соединение. Вручную этого делать не нужно.
+
+### Инкапсуляция `LiveData`-полей
+
+Сейчас поля `word` и `score` не имеют спецификаторов `private`, а значит по-умолчанию на уровне одного пакета они могут использоваться в любых других классах и файлах. Однако, необходимости изменять эти значения вне класса `GameViewModel` нет. Кроме того по шаблону MVVM **View** не должно иметь никакой информации о данных, кроме значений. Иметь возможности менять данные напрямую также быть не должно. Поэтому необходимо инкапсулировать поля, чтобы внешние классы не имели возможности редактирования их значений.
+
+**1. Создание приватных полей `_word` и `_score`:**
+
+```kotlin
+private var _word = MutableLiveData<String>("")
+private var _score = MutableLiveData<Int>(0)
+```
+
+**2. Переопределение полей `word` и `score`:**
+
+Класс `MutableLiveData`, как видно из названия, создает объект `LiveData`, который можно изменять. Класс `LiveData` предоставляет в свою очередь неизменяемые объекты. Это и необходимо в данном случае, чтобы данные мог менять только сам класс `GameViewModel`, а наружу будет предоставляться неизменяемое поле, лишь предоставляющее данные. 
+
+```kotlin
+val word: LiveData<String>
+    get() = _word
+
+val score: LiveData<Int>
+    get() = _score
+```
+
+**3. Заменить использование полей `word` и `score` на `_word` и `_score` внутри `GameViewModel`:**
+
+```kotlin
+private fun nextWord() {
+    //Select and remove a word from the list
+    if (wordList.isEmpty()) {
+//      gameFinished()
+    } else {
+        _word.value = wordList.removeAt(0)
+    }
+}
+
+fun onSkip() {
+    _score.value = score.value?.minus(1)
+    nextWord()
+}
+fun onCorrect() {
+    _score.value = score.value?.plus(1)
+    nextWord()
+}
+```
+
+Теперь при попытке изменить данные полей `word` и  `score` на уровне класса `GameFragment` среда подсветит код красным цветом, а компилятор не позволит проекту собраться.
+
+## Добавление события завершения игры
+
+Для завершения игры необходимо вызвать метод `gameFinished()`, когда кончаются все слова в списке `wordList`. Сейчас вызов метода `gameFinished()` вызывается в классе `GameViewModel`, а описание метода находится в `GameFragment`. Поскольку **ViewModel** не должен ничего знать о **View**, необходимо передать информацию о завершении игры от `GameViewModel` фрагменту. 
+
+Сначала вместо открытия экрана окончания игры в методе `gameFinished()` опишем показ обычного `Toast`-сообщения. Оно будет использоваться для тестирования.
+
+```kotlin
+private fun gameFinished() {
+//        val action = GameFragmentDirections.actionGameToScore(viewModel.score.value ?: 0)
+//        findNavController(this).navigate(action)
+    Toast.makeText(activity, "Game Finished", Toast.LENGTH_SHORT).show()
+}
+```
+
+Далее добавление возможности оповещения фрагмента о событии окончания игры.
+
+**1. Добавление булева свойства `eventGameFinish` в класс `GameViewModel`:**
+
+```kotlin
+private var _eventGameFinish = MutableLiveData<Boolean>(false)
+val eventGameFinish: LiveData<Boolean>
+    get() = _eventGameFinish
+```
+
+**2. Установка значения `_eventGameFinished`, когда список слов пуст:**
+
+```kotlin
+private fun nextWord() {
+    //Select and remove a word from the list
+    if (wordList.isEmpty()) {
+        _eventGameFinish.value = true
+    } else {
+        _word.value = wordList.removeAt(0)
+    }
+}
+```
+
+**3. Подписка фрагмента на изменение `eventGameFinished`:**
+
+```kotlin
+viewModel.eventGameFinish.observe(viewLifecycleOwner, Observer {finished ->
+    if (finished)
+        gameFinished()
+})
+```
+
+В обработчике проверяется значение свойства `eventGameFinish` и если значение `true` (игра окончена), то вызывается метод `gameFinished()`.
+
+Если запустить приложение и пройтись по всем словам, то в конце приложение отобразит `Toast`-сообщение из метода `gameFinished()`. Однако, сейчас есть одна проблема — если сменить ориентацию устройства, то сообщение будет показано снова. Это связано с тем, что после пересоздания фрагмента, `LiveData` посылает сохраненные заранее данные, а сохранено именно значение `true` в свойстве `eventGameFinish`. Чтобы исправить такой баг, необходимо после срабатывания события окончания игры сбрасывать значение свойства в значение по-умолчанию.
+
+**4. Добавление метода `onGameFinishComplete()` для сброса `eventGameFinish`:**
+
+```kotlin
+// GameViewModel
+
+fun onGameFinishComplete() {
+    _eventGameFinish.value = false
+}
+```
+
+```kotlin
+// GameFragment
+
+viewModel.eventGameFinish.observe(viewLifecycleOwner, Observer {finished ->
+    if (finished) {
+        gameFinished()
+        viewModel.onGameFinishComplete()
+    }
+})
+```
+
+Теперь после окончания игры, мы сбрасываем значение `eventGameFinish` в `false` и `Toast`-сообщение не будет показано после смены ориентации экрана.
+
+И в конце можно убрать тестовое `Toast`-сообщение и раскомментировать код перехода к экрану окончания игры.  
+После запуска можно убедиться, что игра работает корректно: очки считаются, текущее слово меняется, слова в списке заканчиваются и после их окончания будет показан экран с итоговым счетом и возможностью начать игру заново.
 
 // In Progress
