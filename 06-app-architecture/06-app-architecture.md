@@ -9,6 +9,7 @@
   - [Добавление `LiveData`](#добавление-livedata)
   - [Инкапсуляция `LiveData`-полей](#инкапсуляция-livedata-полей)
   - [Добавление события завершения игры](#добавление-события-завершения-игры)
+  - [Добавление таймера](#добавление-таймера)
 
 ## Введение
 
@@ -328,12 +329,14 @@ val eventGameFinish: LiveData<Boolean>
 private fun nextWord() {
     //Select and remove a word from the list
     if (wordList.isEmpty()) {
+        resetList()
         _eventGameFinish.value = true
-    } else {
-        _word.value = wordList.removeAt(0)
     }
+    _word.value = wordList.removeAt(0)
 }
 ```
+
+Кроме установки значения `_eventGameFinished` здесь же добавляется вызов `resetList()` для инициализации и перемешивания списка слов, чтоб игру заново можно было корректно начать.
 
 **3. Подписка фрагмента на изменение `eventGameFinished`:**
 
@@ -373,5 +376,101 @@ viewModel.eventGameFinish.observe(viewLifecycleOwner, Observer {finished ->
 
 И в конце можно убрать тестовое `Toast`-сообщение и раскомментировать код перехода к экрану окончания игры.  
 После запуска можно убедиться, что игра работает корректно: очки считаются, текущее слово меняется, слова в списке заканчиваются и после их окончания будет показан экран с итоговым счетом и возможностью начать игру заново.
+
+### Добавление таймера
+
+Для полноты функционала игре не хватает таймера, который будет отсчитывать время до окончания игры. По окончанию игры будет показно окно с сообщением о завершении игры и количеством заработанных очков.
+
+Вопрос: где логично было бы разместить таймер: в `GameFragment` или `GameViewModel`?
+
+Ответ: В `GameViewModel`. Поскольку время работы таймера — должно сохраняться при семен ориентации устройства.
+
+В данном примере таймером будет служить экземпляр абстрактного класса `CountDownTimer`.
+
+```kotlin
+CountDownTimer(/* Full time */, /* Tick time */) {
+
+    override fun onTick(millisUntilFinished: Long) {
+        // TODO implement what should happen each tick of the timer
+    }
+
+    override fun onFinish() {
+        // TODO implement what should happen when the timer finishes
+    }
+}
+```
+
+Класс `CountDownTimer` имеет два абстрактных метода. Метод `onTick()` выполняется на каждый "тик" таймера. Метод `onFinish()` выполняется по завершении работы таймера.
+
+**1. Добавление таймера в `GameViewModel`:**
+
+Перед добавлением таймера необходимо добавить статические поля `ONE_SECOND` и `GAME_TIME`, которые будут содержать время в миллисекундах одной секунды и времени всей игры, которая для тестов взята в размере 10 секунд.
+
+```kotlin
+companion object {
+    // This is the number of milliseconds in a second
+    const val ONE_SECOND = 1000L
+    // This is the total time of the game
+    const val GAME_TIME = 10 * ONE_SECOND
+}
+
+private var timer: CountDownTimer
+
+init {
+    ...
+    timer = object : CountDownTimer(GAME_TIME, ONE_SECOND) {
+        override fun onTick(millisUntilFinished: Long) {
+            // TODO
+        }
+        override fun onFinish() {
+            _eventGameFinish.value = true
+        }
+    }
+    timer.start()
+}
+```
+
+В блоке `init` создается объект абстрактного класса и описывается реализация его абстрактных методов. В конструктор `CountDownTimer` передается общее время работы таймера и время интервала между тиками. В методе `onFinish()` можно сразу описать, что должно выполниться по окончанию работы таймера, а именно установка "флага" о том, что игра завершена. При этом установку этого значения следует удалить из метода `resetList()` поскольку, если время еще не вышло, но слова закончились, то нет смысла завершать игру, можно заново заполнить список слов, перемешать и продолжить. Таймер запускается при инициализации `GameViewModel`, т.е. при открытии окна с игрой.
+
+**2. Отображение оставшегося времени:**
+
+Далее необходимо, чтобы на каждый тик таймера на экране игры отображалось новое время, оставшееся до конца игры.  
+Время до конца игры будет храниться также в классе `GameViewModel` в `MutableLiveData`.
+
+```kotlin
+private var _secondsUntilEnd = MutableLiveData<Long>()
+val secondsUntilEnd: LiveData<Long>
+    get() = _secondsUntilEnd
+```
+
+Время до конца игры будет хранится в секундах. Именно количество секунд будет отображаться на экране.
+
+В блоке `init` необходимо проинициализировать `_secondsUntilEnd` временем на игру в секундах.
+
+```kotlin
+_secondsUntilEnd.value = GAME_TIME / ONE_SECOND
+```
+
+Далее необходимо обновлять значение `_secondsUntilEnd` на каждый тик таймера. Метод `onTick()` принимает в качестве параметра количество миллисекунд оставшихся до окончания работы таймера. В поле `_secondsUntilEnd` необходимо записать именно это значение, но в секундах.
+
+```kotlin
+override fun onTick(millisUntilFinished: Long) {
+    _secondsUntilEnd.value = millisUntilFinished / ONE_SECOND
+}
+```
+
+И в конце необходимо настроить подписку на изменение значения оставшегося времени в классе `GameFragment`.
+
+```kotlin
+// GameFragment.onCreate()
+
+viewModel.secondsUntilEnd.observe(viewLifecycleOwner, Observer {secondsUntilEnd ->
+    binding.timerText.text = DateUtils.formatElapsedTime(secondsUntilEnd)
+})
+```
+
+В обработчике выполняется преобразование количества секунд к строке вызовом `DateUtils.formatElapsedTime()`. Данный метод принимает на вход количество секунд, а на выходе получается строка с привычным представлением времени, например, "00:10". Полученная строка записывается в текстовое поле для отображения времени `timerText`.
+
+После всех выполненых операций можно запустить приложение и убедиться, что игра ведется на время, а по истечении времени пользователю показывается экран с сообщением о завершении игры и количеством набранных очков.
 
 // In Progress
