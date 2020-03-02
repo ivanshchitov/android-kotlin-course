@@ -9,6 +9,7 @@
 	- [Добавление перехода от одного экрана к другому](#добавление-перехода-от-одного-экрана-к-другому)
 	- [Манипуляции со стеком фрагментов](#манипуляции-со-стеком-фрагментов)
 - [ActionBar-меню](#actionbar-меню)
+- [SafeArgs](#safeargs)
 - [Navigation Drawer](#navigation-drawer)
 - [Интенты](#интенты)
   - [Explicit-интенты](#explicit-интенты)
@@ -316,6 +317,84 @@ override fun onOptionsItemSelected(item: MenuItem?): Boolean {
 Метод `NavigationUI.onNavDestinationSelected()` выполняет навигацию к фрагменту по идентификатору меню. Именно для этого идентификаторы фрагмента и меню, по которому к фрагменту нужно перейти, важно указывать одинаковыми.
 
 По сути фрагмент `AboutFragment` имеет в графе навигации идентификатор `aboutFragment`. Добавленный пункт меню "About" имеет аналогичный идентификатор и метод `NavigationUI.onNavDestinationSelected()`, принимающий на вход элемент меню (`MenuItem`) и экземпляр `NavController` сопоставляет эти идентификаторы и выполняет переход, если это возможно. Если переход невозможен, то метод вернет `false` и будет вызвана родительская реализация метода `super.onOptionsItemSelected(item)`.
+
+## SafeArgs
+
+Иногда перед разработчиком может встать задача передачи данных между экранами приложения и для этого в Android есть удобный механизм. **SafeArgs** — это Gradle-плагин, позволяющий реализовать передачу данных между фрагментами.
+
+Далее будет рассмотрено добавление SafeArgs для простейшей задачи — отображения текстового сообщения об общем числе вопросов и числе правильных ответов на `GameWonFragment`.
+
+**1. Добавление зависимости SafeArgs:**
+
+Сперва необходимо добавить зависимость от библиотеки SafeArgs в Gradle-файл проекта (не модуля `app`).
+
+```gradle
+dependencies {
+    ...
+    classpath "android.arch.navigation:navigation-safe-args-gradle-plugin:$version_navigation"
+}
+```
+
+Затем необходимо включить плагин в Gradle-файл модуля `app`.
+
+```gradle
+apply plugin: 'androidx.navigation.safeargs'
+```
+
+После включения плагина необходимо очистить и пересобрать проект, чтобы компилятор сгенерировал "Directions"-классы, содержащие информацию о навигации между фрагментами (по типу идентификаторов `action_gameFragment_to_gameWonFragment`), а также позволяющие организовать передачу данных между фрагментами.
+
+**2. Использование "Directions"-классов:**
+
+После того, как "Directions"-классы сгенерированы, можно заменить использование ссылок на идентификаторы навигации на использование этих классов.
+
+```kotlin
+// GameFragment: Using directions to navigate to the GameWonFragment
+view.findNavController().navigate(GameFragmentDirections.actionGameFragmentToGameWonFragment())
+```
+
+```kotlin
+// GameFragment: Using directions to navigate to the GameOverFragment
+view.findNavController().navigate(GameFragmentDirections.actionGameFragmentToGameOverFragment())
+```
+
+По такому же принципу выполняется замена в остальных местах.
+
+**3. Добавление аргументов в редакторе навигации:**
+
+Далее необходимо описать для `GameWonFragment` данные, которые он должен получать. В данном случае — это общее число вопросом `numQuestions` и число правильных ответов `numCorrect`. Оба числа целочисленные (`integer`).
+
+Для добавления описания параметров необходимо перейти в редактор навигации, выбрать `gameWonFragment` и добавить аргументы в разделе "Arguments" панели "Attributes".
+
+После этого сборка проекта будет невозможно, поскольку вызов `GameFragmentDirections.actionGameFragmentToGameWonFragment()` будет требовать входных параметров, которые только что были описаны.
+
+**4. Передача данных фрагменту:**
+
+Чтобы передать данные фрагменту, необходимо передать их в вызов `GameFragmentDirections.actionGameFragmentToGameWonFragment()`.
+
+```kotlin
+// GameFragment: Adding the parameters to the Action
+view.findNavController().navigate(GameFragmentDirections.actionGameFragmentToGameWonFragment(numQuestions, questionIndex))
+```
+
+Параметры `numQuestions` и `questionIndex` определяют общее число вопросов и индекс текущего вопроса, а в случае с выигрышем — это и число правильных ответов.
+
+Теперь проект успешно собирается, данные передаются, но никак не принимаются и не обрабатываются.
+
+**5. Обработка полученных данных:**
+
+Переданные в `GameWonFragment` данные отобразим на экране с помощью `Toast`-сообщения. Для этого необходимо воспользоваться вызовом `GameWonFragmentArgs.fromBundle(arguments!!)` для получения передаваемых данных.  
+"Args"-класс `GameWonFragmentArgs` генерируется, так же как и "Directions"-классы, автоматически. Он предоставляет доступ к хранилищу `Bundle` куда сохраняются передаваемые данные.  
+Далее для получения конкретных значений необходимо обратиться к данным по именам ранее переданных переменных. 
+
+```kotlin
+// GameWonFragment.onCreate
+
+val args = GameWonFragmentArgs.fromBundle(arguments!!)
+Toast.makeText(context, "NumCorrect: ${args.numCorrect}, NumQuestions: ${args.numQuestions}",
+               Toast.LENGTH_LONG).show()
+```
+
+Таким образом при открытии `GameWonFragment` на экране будет отображено `Toast`-сообщение с полученными `numCorrect` и `numQuestions`.
 
 ## Navigation Drawer
 
