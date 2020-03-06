@@ -9,7 +9,8 @@
   - [Добавление `LiveData`](#добавление-livedata)
   - [Инкапсуляция `LiveData`-полей](#инкапсуляция-livedata-полей)
   - [Добавление события завершения игры](#добавление-события-завершения-игры)
-  - [Добавление таймера](#добавление-таймера)
+- [Добавление таймера](#добавление-таймера)
+- [ViewModel Factory](#viewmodel-factory)
 
 ## Введение
 
@@ -377,7 +378,7 @@ viewModel.eventGameFinish.observe(viewLifecycleOwner, Observer {finished ->
 И в конце можно убрать тестовое `Toast`-сообщение и раскомментировать код перехода к экрану окончания игры.  
 После запуска можно убедиться, что игра работает корректно: очки считаются, текущее слово меняется, слова в списке заканчиваются и после их окончания будет показан экран с итоговым счетом и возможностью начать игру заново.
 
-### Добавление таймера
+## Добавление таймера
 
 Для полноты функционала игре не хватает таймера, который будет отсчитывать время до окончания игры. По окончанию игры будет показно окно с сообщением о завершении игры и количеством заработанных очков.
 
@@ -473,4 +474,99 @@ viewModel.secondsUntilEnd.observe(viewLifecycleOwner, Observer {secondsUntilEnd 
 
 После всех выполненых операций можно запустить приложение и убедиться, что игра ведется на время, а по истечении времени пользователю показывается экран с сообщением о завершении игры и количеством набранных очков.
 
-// In Progress
+## ViewModel Factory
+
+Можно заметить, что созданный ранее класс `GameViewModel` имеет только конструктор по-умолчанию, а все его `LiveData`-поля инициализируются лишь некоторыми значениями по-умолчанию. Инициализация объекта этого класса выполняется следующим образом:
+
+```kotlin
+viewModel = ViewModelProvider(this).get(GameViewModel::class.java)
+```
+
+То есть код инициализации не предполагает вызов конструктора напрямую и передачу ему каких-либо параметров. Как тогда быть, когда мы хотим инициализировать некоторые поля `ViewModel`-класса самостоятельно путем передачи аргументов в конструктор.
+
+Например, если рассмотреть класс `ScoreFragment`, отображающий финальное число набранных в игре очков `score`, можно заметить, что значение текстового поля с очками `scoreText` устанавливается из переданных во фрагмент данных из `Bundle`.
+
+```kotlin
+val scoreFragmentArgs by navArgs<ScoreFragmentArgs>()
+binding.scoreText.text = scoreFragmentArgs.score.toString()
+```
+
+Следуя принципам шаблона MVVM, необходимо хранить количество очков `score` внутри `ViewModel` класса. Однако, в этом случае значение `score` необходимо передавать внутрь `ViewModel`-класса, а значит для класса `ScoreViewModel` необходим конструктор с параметром.
+
+Для создания конструкторов с параметром используют фабрики классов **ViewModel Factory**.  
+ViewModel Factory — это класс, который знает о том, как создавать классы `ViewModel`.
+
+Шаги по добавлению конструктора для `ViewModel`-класса:
+
+1. Создать `ViewModel`-класс, принимающий параметр в конструкторе.
+2. Создать `ViewModelFactory`-класс для создания экземпляра `ViewModel`.
+3. Использовать `ViewModelFactory`-класс для получения экземпляра `ViewModel` с помощью `ViewModelProvider` в коде фрагмента.
+
+**1. Добавление класса `ScoreViewModel`:**
+
+Сперва создадим класс `ScoreViewModel` для класса `ScoreFragment`.  
+Класс будет иметь параметр конструктора `finalScore` и `LiveData`-поле `score`, которое будет проинициализировано параметром в блоке `init`.
+
+```kotlin
+class ScoreViewModel(finalScore: Int) : ViewModel() {
+
+    private val _score = MutableLiveData<Int>()
+    val score: LiveData<Int>
+        get() = _score
+
+    init {
+        _score.value = finalScore
+    }
+}
+```
+
+**2. Добавление класса `ScoreViewModelFactory`:**
+
+Далее добавляется класс `ScoreViewModelFactory`, который будет создавать экземпляр `ScoreViewModel`, передавая ему параметр в конструктор. Данный класс также имеет конструктор с параметром, а также переопределение шаблонного метода `create()`.  
+Параметр `modelClass` — это класс, объект которого запрашивается для создания. В нашем случае это `ScoreViewModel`. В блоке `if` выполняется проверка на то, что объект `modelClass` является именно типом `ScoreViewModel` или может быть к нему приведен. И если условие выполняется, то метод создает экземпляр `ScoreViewModel`, вызывая конструктор с параметром, и возвращает значение.
+
+```kotlin
+class ScoreViewModelFactory(private val finalScore: Int) : ViewModelProvider.Factory {
+
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ScoreViewModel::class.java)) {
+            return ScoreViewModel(finalScore) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+```
+
+**3. Использование `ScoreViewModelFactory` для создания `ScoreViewModel` в коде `ScoreFragment`:**
+
+Далее для использования фабрики для создания `ScoreViewModel` необходимо сперва добавить соответствующие свойства в класс.
+
+```kotlin
+private lateinit var viewModel: ScoreViewModel
+private lateinit var viewModelFactory: ScoreViewModelFactory
+```
+
+Затем необходимо инициализировать поля в методе `onCreateView()`.
+
+```kotlin
+val scoreFragmentArgs by navArgs<ScoreFragmentArgs>()
+
+viewModelFactory = ScoreViewModelFactory(scoreFragmentArgs.score)
+viewModel = ViewModelProvider(this, viewModelFactory)
+        .get(ScoreViewModel::class.java)
+```
+
+Инициализация `viewModelFactory` заключается в вызове конструктора с передачей параметра с числом набранных очков, переданных в фрагмент `ScoreFragment`.  
+Инициализация `viewModel` почти идентична инициализации аналогичного поля в `GameFragment`. Отличие заключается в том, что здесь конструктор `ViewModelProvider` принимает на вход еще и экземпляр `viewModelFactory`. Таким образом `ViewModelProvider` будет использовать созданную нами фабрику, инициализирующую `ScoreViewModel` с помощью конструктора с параметром. И свойство `score` внутри `ScoreViewModel` сразу будет проинициализировано переданным значением.
+
+Осталось лишь заменить установку текстового поля `scoreText` из `Bundle` на подписку на изменение значения в **ViewModel**.
+
+```
+//  binding.scoreText.text = scoreFragmentArgs.score.toString()
+
+viewModel.score.observe(viewLifecycleOwner, Observer { newScore ->
+    binding.scoreText.text = newScore.toString()
+})
+```
+
+Таким образом реализуется возможность использование конструкторов с параметром для `ViewModel`-классов.
