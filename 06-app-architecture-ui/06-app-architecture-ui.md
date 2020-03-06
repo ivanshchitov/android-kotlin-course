@@ -1,4 +1,4 @@
-# Архитектура приложения
+# Архитектура приложения (UI)
 
 ## Оглавление
 
@@ -561,7 +561,7 @@ viewModel = ViewModelProvider(this, viewModelFactory)
 
 Осталось лишь заменить установку текстового поля `scoreText` из `Bundle` на подписку на изменение значения в **ViewModel**.
 
-```
+```kotlin
 //  binding.scoreText.text = scoreFragmentArgs.score.toString()
 
 viewModel.score.observe(viewLifecycleOwner, Observer { newScore ->
