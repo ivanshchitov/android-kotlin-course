@@ -6,6 +6,9 @@
 - [Объявление объектов базы данных](#объявление-объектов-базы-данных)
 - [Data Access Object](#data-access-object)
 - [Создание базы данных `Room`](#создание-базы-данных-room)
+  - [Создание класса базы данных `SleepDatabase`](#cоздание-класса-базы-данных-sleepdatabase)
+  - [Тестирование работоспособности `SleepDatabase`](#тестирование-работоспособности-sleepdatabase)
+  - [Добавление ViewModel с классом базы данных](#добавление-viewmodel-с-классом-базы-данных)
 
 ## Введение
 
@@ -193,6 +196,8 @@ fun getTonight(): SleepNight?
 
 ![](mvvm-with-database.png)
 
+### Создание класса базы данных `SleepDatabase`
+
 Для создания класса базы данных необходимо:
 
 * Создать абстрактный класс наследованный от `RoomDatabase`. Класс абстрактный, т.к. `Room` создаст его реализацию для на самостоятельно при компиляции.
@@ -268,16 +273,117 @@ fun getInstance(context: Context): SleepDatabase {
 
 Таким образом синглтон-создается класс для инициализации и доступа к базе данных. Код должен успешно собираться, однако пока неясно работает ли он.
 
-**5. Тестирование работоспособности класса базы данных `SleepDatabase` и DAO:**
+### Тестирование работоспособности `SleepDatabase`
 
 Для проверки работоспособности кода можно выполнить уже добавленные в стартовый код тест. Для этого необходимо перейти в файл `SleepDatabaseTest.kt` и раскомментировать весь код.
 
 Код тестов содержит метод `createDb()` помеченный аннотацией `@Before`. Аннотация объявляет данный метод как тот, что будет вызван перед выполнением каждого теста. Здесь инициализируется объект `SleepDatabase` с помощью метода `inMemoryDatabaseBuilder()`. Метод создаст временную БД, которая будет хранится в памяти устройства и будет удалена автоматически после завершения тестов. Метод `allowMainThreadQueries()` позволяет выполнять запросы к БД на главном потоке приложения. По умолчанию это не разрешено, т.к. выполнение запросов на главном потоке блокирует выполнение остальных операций. Вызов же метода `allowMainThreadQueries()` разрешает выполнение запросов на главном потоке. Однако, когда запросов становится много это может значительно замедлять работу приложения.
 
+```kotlin
+@Before
+fun createDb() {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    db = Room.inMemoryDatabaseBuilder(context, SleepDatabase::class.java)
+            // Allowing main thread queries, just for testing.
+            .allowMainThreadQueries()
+            .build()
+    sleepDao = db.getSleepDatabaseDao()
+}
+```
+
 Метод `closeDb()` выполняет закрытие соединения с БД и т.к. он помечен аннотацией `@After` он будет выполнен после каждого теста.
+
+```kotlin
+@After
+@Throws(IOException::class)
+fun closeDb() {
+    db.close()
+}
+```
 
 Метод же помеченный аннотацией `@Test` является методом-тестом. Здесь такой метод проверяет корректность работы DAO по добавлению новой записи в БД. Метод создает новый объект `SleepNight`, использует объект DAO для выполнения запроса `INSERT` к БД, затем достает из БД последнюю добавленную запись и проверяет значение ее поля `sleepQuality` на соответствие значению по умолчанию, т.к. вручную значение для поля не задавалось.
 
+```kotlin
+@Test
+@Throws(Exception::class)
+fun insertAndGetNight() {
+    val night = SleepNight()
+    sleepDao.insert(night)
+    val tonight = sleepDao.getTonight()
+    assertEquals(tonight?.sleepQuality, -1)
+}
+```
+
 Для запуска тестов необходимо нажать на файле правой кнопкой мыши и выбрать `Run`.
+
+### Добавление ViewModel с классом базы данных
+
+Для работы с базой данных в рамках шаблона MVVM необходимо добавить `ViewModel`-класс с объектом DAO внутри.
+
+**1. Описание класса `SleepTrackerViewModel`:**
+
+В стартовом коде приложения уже создан класс `SleepTrackerViewModel`.
+
+```kotlin
+class SleepTrackerViewModel(
+    val dao: SleepDatabaseDao,
+    application: Application) : AndroidViewModel(application) {
+}
+```
+
+Класс `SleepTrackerViewModel` наследуется от `AndroidViewModel`. Класс `AndroidViewModel` является расширеним стандартного `ViewModel`. Отличие заключается в том, что конструктор должен принимать в качестве параметра экземпляр класса `Application`. Такое расширение может быть полезным в случаях, когда нам нужно использовать контекст приложения, например, для доступа к ресурсам приложения.
+
+Конструктор класса `SleepTrackerViewModel` принимает на вход два параметра: объект класса `SleepDatabaseDao`, являющийся свойством класса, а также непосредственно объект `Application`, передающийся в конструктор `AndroidViewModel`.
+
+**2. Описание класса `SleepTrackerViewModelFactory`:**
+
+Поскольку класс `SleepTrackerViewModel` содержит конструктор с параметром, для создания объекта класса необходимо описать factory-класс `SleepTrackerViewModelFactory`. В стартовом коде приложения такой класс уже добавлен.
+
+```kotlin
+class SleepTrackerViewModelFactory(
+        private val dao: SleepDatabaseDao,
+        private val application: Application) : ViewModelProvider.Factory {
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SleepTrackerViewModel::class.java)) {
+            return SleepTrackerViewModel(dao, application) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+```
+
+Класс `SleepTrackerViewModelFactory` наследуется от `ViewModelProvider.Factory`. Конструктор класса также принимает объекты DAO и контекста приложения, которые передаются в конструктор `SleepTrackerViewModel`.
+
+**2. Добавление ViewModel в фрагмент:**
+
+Для добавления `ViewModel` необходимо добавить свойство `viewModel` класса `SleepTrackerFragment` и инициализировать его в методе `onCreateView()`.
+
+```kotlin
+// SleepTrackerFragment
+
+private lateinit var viewModel: SleepTrackerViewModel
+
+override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                          savedInstanceState: Bundle?): View? {
+
+    ...
+
+    val application = requireNotNull(this.activity).application
+    val dao = SleepDatabase.getInstance(application).getSleepDatabaseDao()
+    val viewModelFactory = SleepTrackerViewModelFactory(dao, application)
+    viewModel = ViewModelProvider(this, viewModelFactory)
+            .get(SleepTrackerViewModel::class.java)
+
+    ...
+}
+```
+
+В методе `onCreateView()` сперва инициализируется объект `application`, который содержит контекст приложения и который необходимо передать в конструктор `SleepTrackerViewModel`. Экземпляр объекта можно получить из экземпляра активности, внутри которой содержится фрагмент. Здесь используется метод `requireNotNull()` для проверки экземпляра активности на `null`, и если активность содержит `null`, то метод выкинет исключение с сообщением об этом. В нормальной ситуации такого произойти не должно, но поскольку система Android может сама "убивать" активности, то предосторожность не помешает в данном случае.
+
+Далее инициализируется объект DAO. Получение объекта выполняется с помощью статического вызова метода `getInstance(application).getSleepDatabaseDao()` класса базы данных `SleepDatabase`. Вызов метода `getInstance()` инициализирует или возвращает уже проинициализированный ранее экземпляр объекта базы данных `SleepDatabase`, а метод `getSleepDatabaseDao()` возвращает экземпляр DAO. Стоит напомнить, что метод описан как абстрактный, но при сборке `Room` генерирует его реализацию автоматически.
+
+Далее создается объект `SleepTrackerViewModelFactory` с передачей в конструктор экземпляров DAO и контекста приложения, необходимых для инициализации `ViewModel`-класса. И в завершении инициализируется объект `viewModel` с помощью вызова `ViewModelProvider().get()`.
+
+Таким образом реализуется и описывается `ViewModel`-класс с объектом DAO внутри и его инициализация в фрагменте.
 
 // In Progress
