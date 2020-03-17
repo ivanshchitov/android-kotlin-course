@@ -726,6 +726,192 @@ viewModel.nightsString.observe(viewLifecycleOwner, Observer { nightsString ->
 
 ## Обновление записей базы данных
 
+Обновление записей базы данных уже описывалось ранее в обработчике кнопки "Stop" `onStopTrackeng()`. В этом же разделе будет рассматриваться обновление информации о качестве сна: поля `sleep_quality` таблицы `sleep_quality_table`.
 
+Основная идея заключается в том, что по нажатию на кнопку "Stop" должен выполняться переход к фрагменту с оценкой сна `SleepQualityFragment`. На фагменте пользователь выбирает оценку, нажимает на нее и переходит обратно к фрагменту `SleepTrackerFragment` с записями о снах.
 
-// In Progress
+Навигация между фрагментами уже создана и описана в файле `navigation.xml`. Не добавлена лишь программная реализация.
+
+Сперва необходимо добавить навигацию к фрагменту оценки сна по нажатию на кнопку "Stop". Для этого необходимо:
+
+1. Добавить в класс `SleepTrackerViewModel` свойство, изменение которого будет событием для открытия фрагмента `SleepQualityFragment`.
+2. Добавить установки свойства в обработчик кнопки "Stop".
+3. Подписаться на изменение свойства в фрагменте и при изменении выполнять переход к фрагменту `SleepQualityFragment`.
+
+**1. Добавление свойства `navigateToSleepQuality`:**
+
+Подобно тому как это делалось в предыдущем уроке, добавляется свойсвво-событие `navigateToSleepQuality`. Изменение этого свойства будет индикатором того, что необходимо перейти к фрагменту оценки сна.
+
+```kotlin
+private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
+val navigateToSleepQuality: LiveData<SleepNight>
+    get() = _navigateToSleepQuality
+```
+
+Как и в предыдущем уроке, свойство инкапсулируется с помощью приватного изменяемого свойства `_navigateToSleepQuality` и переопределения геттера `get()`.
+
+Кроме этого для сброса значения свойства (чтобы не выполнялись ложные срабатывания) объявляется метод `doneNavigating()`:
+
+```kotlin
+fun doneNavigating() {
+    _navigateToSleepQuality.value = null
+}
+```
+
+**2. Установка свойства `navigateToSleepQuality`:**
+
+Поскольку именно по нажатию на кнопку "Stop" должен выполняться переход к фрагменту оценки сна, то установка свойства-события добавляется именно в метод обработчик нажатия на кнопку `onStopTracking()`.
+
+```kotlin
+fun onStopTracking() {
+    uiScope.launch {
+        val oldNight = tonight.value ?: return@launch
+        oldNight.endTimeMillis = System.currentTimeMillis()
+        update(oldNight)
+        _navigateToSleepQuality.value = oldNight
+    }
+}
+```
+
+**3. Подписка на изменение свойства `navigateToSleepQuality`:**
+
+В класс `SleepTrackerFragment` добавляется подписка на изменение свойства `navigateToSleepQuality`. Обработчик изменения описывает вызов метода `navigate()` для перехода к фрагменту `SleepQualityFragment` с передачей ему ключ записи в качестве аргумента. В конце сбрасывается значение свойства методом `doneNavigating()`.
+
+```kotlin
+// SleepTrackerFragment.onCreateView()
+
+viewModel.navigateToSleepQuality.observe(this, Observer { night ->
+    if (night != null) {
+        this.findNavController().navigate(
+                SleepTrackerFragmentDirections
+                        .actionSleepTrackerFragmentToSleepQualityFragment(night.nightId))
+        viewModel.doneNavigating()
+    }
+})
+```
+
+Если запустить приложение, то можно убедиться, что после нажатия на кнопку "Stop" выполняется переход к фрагменту оценки сна, т.е. добавленный код работает правильно. По нажатию на системную кнопку "Назад" выполняется переход к фрагменту со списком записей. Далее требуется добавить обработку нажатия на кнопки на фрагменте оценки сна.
+
+Для реализации обновления значения качества сна для записи БД необходимо:
+
+1. Реализовать класс `SleepQualityViewModel` с методом для обновления данных с помощью DAO и свойством-событием для возврата к экрану со списком записей.
+2. Реализовать класс `SleepQualityViewModelFactory` для создания экземпляра `SleepQualityViewModel` с помощью конструктора с параметрами.
+3. Добавить обработку нажатия для кнопок оценки сна.
+
+**1. Реализация класса `SleepQualityViewModel`:**
+
+Реализация класса `SleepQualityViewModel` похожа на реализацию класса `SleepTrackerViewModel`, описанного выше.  
+Для работы с корутинами также добавляются свойства `Job` и `Scope`, а также переопределение метода `onCleared()`.
+
+```kotlin
+class SleepQualityViewModel(
+        private val nightKey: Long = 0L,
+        val dao: SleepDatabaseDao) : ViewModel() {
+
+    private val viewModelJob = Job()
+    private val uiScope =  CoroutineScope(Dispatchers.Main + viewModelJob)
+
+    override fun onCleared() {
+        super.onCleared()
+        viewModelJob.cancel()
+    }
+}
+```
+
+Для навигации к фрагменту `SleepTrackerFragment` точно также необходимо добавить свойство-событие `navigateToSleepTracker` с инкапсуляцией приватным свойством и с методом `doneNavigating()` для сброса значения свойства.
+
+```kotlin
+private val _navigateToSleepTracker = MutableLiveData<Boolean>()
+val navigateToSleepTracker: LiveData<Boolean?>
+    get() = _navigateToSleepTracker
+
+fun doneNavigating() {
+    _navigateToSleepTracker.value = false
+}
+```
+
+Для обработки нажатия на кнопки для оценки, добавляется метод `onSetSleepQuality()`. Реализация метода похожа на реализацию метода `onStopTracking()`. Отличие в том, что здесь обновляется значение `sleepQuality`.
+
+```kotlin
+fun onSetSleepQuality(quality: Int) {
+    uiScope.launch {
+        withContext(Dispatchers.IO) {
+            val tonight = dao.get(nightKey) ?: return@withContext
+            tonight.sleepQuality = quality
+            dao.update(tonight)
+        }
+        _navigateToSleepTracker.value = true
+    }
+}
+```
+
+Таким образом класс `SleepQualityViewModel` готов к работе. Он позволяет выполнять обновление данных в БД и информировать фрагмент о том, что необходимо выполнить переход к предыдущему фрагменту.
+
+**2. Реализация класса `SleepQualityViewModelFragment`:**
+
+Конструктор класс `SleepQualityViewModel` имеет два параметра, а значит для создания экземпляра такого класса необходим factory-класс `SleepQualityViewModelFactory`.
+
+```kotlin
+class SleepQualityViewModelFactory(
+        private val sleepNightKey: Long,
+        private val dao: SleepDatabaseDao) : ViewModelProvider.Factory {
+
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SleepQualityViewModel::class.java)) {
+            return SleepQualityViewModel(sleepNightKey, dao) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+```
+
+Реализация factory-класса аналогично реализации такого же класса для `SleepTrackerViewModel`.
+
+**3. Реализация обновления данных в `SleepQualityFragment`:**
+
+Для реализации обновления данных в фрагменте оценки сна необходимо инициализировать объект `ViewModel`, добавить обработчик для кнопок оценки сна и реализовать переход на фрагмент со списком записей после выбора оценки.
+
+Для начала необходимо проинициализировать `ViewModel`, а для этого необходимо сперва получить передаваемые данные, инициализировать объект DAO и factory-объект.
+
+```kotlin
+// SleepQualityFragment.onCreateView()
+
+val args = SleepQualityFragmentArgs.fromBundle(arguments!!)
+val dao = SleepDatabase.getInstance(application).getSleepDatabaseDao()
+val viewModelFactory = SleepQualityViewModelFactory(args.sleepNightKey, dao)
+val viewModel = ViewModelProvider(this, viewModelFactory)
+        .get(SleepQualityViewModel::class.java)
+```
+
+На фрагменте располагаются шесть кнопок (компонентов `ImageView`) для оценки сна. Для обработки нажатия необходимо также назначить обработчик для события `onClick`.  
+Чтобы не устанавливать для каждой кнопки обработчик вручную и не дублировать код, кнопки объединяются в список, а обработчики устанавливаются в цикле. Числовое значение оценки в данном случае равняется индексу кнопки в списке, что очень удобно.
+
+```kotlin
+// SleepQualityFragment.onCreateView()
+
+val buttons = arrayListOf(binding.qualityZeroImage, binding.qualityOneImage,
+        binding.qualityTwoImage, binding.qualityThreeImage,
+        binding.qualityFourImage, binding.qualityFiveImage)
+for ((index, button) in buttons.withIndex()) {
+    button.setOnClickListener {
+        viewModel.onSetSleepQuality(index)
+    }
+}
+```
+
+Для обработки изменения свойства-события `navigateToSleepTracker` добавляется подписка на изменения свойства. Если свойство имеет значение `true`, то выполняется переход к фрагменту `SleepTrackerFragment` и сброс значения свойства.
+
+```kotlin
+// SleepQualityFragment.onCreateView()
+
+viewModel.navigateToSleepTracker.observe(this,  Observer { shouldNavigate ->
+    if (shouldNavigate!!) {
+        this.findNavController().navigate(SleepQualityFragmentDirections
+                .actionSleepQualityFragmentToSleepTrackerFragment())
+        viewModel.doneNavigating()
+    }
+})
+```
+
+Если запустить приложение, нажать "Start" и затем "Stop", то откроется фрагмент оценки сна, позволяющий выбрать оценку для сна. После выбора оценки выполняется переход обратно к фрагменту со списком записей, где у последней записи в поле "Quality" отображается текстовое представление оценки сна.
+
