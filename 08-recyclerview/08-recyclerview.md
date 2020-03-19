@@ -5,6 +5,7 @@
 - [Введение](#введение)
 - [Шаблон проектирования "Адаптер"](#шаблон-проектирования-адаптер)
 - [Добавление `RecyclerView`](#добавление-recyclerview)
+- [Отображение записей `SleepNight` в списке `RecyclerView`](#отображение-записей-sleepnight-в-списке-recyclerview)
 
 ## Введение
 
@@ -66,6 +67,165 @@
 Далее перейдем к добавлению `RecyclerView`-, `Adapter-` и `ViewHolder`-классов шаг за шагом.
 
 ## Добавление `RecyclerView`
+
+Перейдем к добавлению `RecyclerView` на макет фрагмента `SleepTrackerFragment` и реализации класса-адаптера.
+
+**1. Добавление `RecyclerView` в файл `fragment_sleep_tracker.xml`:**
+
+На текущий момент макет `fragment_sleep_tracker.xml` содержит компонент `ScrollView` с `TextView` внутри. Наша задача — заменить `ScrollView` на `RecyclerView`. Именно он будет отображать список элементов.
+
+```kotlin
+<androidx.recyclerview.widget.RecyclerView
+    android:id="@+id/sleep_list"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    app:layout_constraintBottom_toTopOf="@+id/clear_button"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/stop_button"
+    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+```
+
+Компонент `RecyclerView` имеет идентификатор `sleep_list`. Он потребуется позже. Кроме этого компонент располагается внутри `ConstraintLayout`, поэтому для него нет необходимости строго настраивать ширину и высоту, но обязательно настраиваются "привязки" к краям экрана слева и справа, а также к кнопке "Stop" сверху и кнопке "Clear" снизу. Список записей располагается между этими кнопками. В конце настраивается параметр `layoutManager`. На вход параметр принимает имя класса `LinearLayoutManager`, который определяет расположение элементов внутри `RecyclerView` и политику взаимодействия с ними. Кроме `LinearLayoutManager` это могут быть также `GridLayoutManager`, `StaggeredGridLayoutManager` и `WearableLinearLayoutManager`. `LinearLayoutManager` определяет, что элементы внутри `RecyclerView` будут располагаться в виде списка.
+
+**2. Добавление класса `SleepNightAdapter`:**
+
+Для добавления адаптера необходимо создать новый класс `SleepNightAdapter`. Он должен наследоваться от шаблонного класса `RecyclerView.Adapter<>` и в качестве шаблона указывается класс `ViewHolder`.
+
+```kotlin
+class SleepNightAdapter : RecyclerView.Adapter<TextItemViewHolder>() {
+}
+```
+
+**3. Добавление класса `TextItemViewHolder`:**
+
+Для тестов нам необходимо просто отобразить текст в элементах списка, поэтому создадим простейший `TextItemViewHolder` с элементом `TextView` внутри. 
+
+```kotlin
+class TextItemViewHolder(val textView: TextView): RecyclerView.ViewHolder(textView)
+```
+
+Добавленный код компилятор не соберет, поскольку необходимо переопределить несколько методов класса-адаптера, чтобы предоставить `RecyclerView` информацию о данных и видах элементов.
+
+**4. Добавление данных в адаптер:**
+
+Для начала добавим свойство `data`, которое будет являться списком объектов `SleepNight`. Это будут данные для `RecyclerView`.
+
+```kotlin
+var data = listOf<SleepNight>()
+    set(value) {
+        field = value
+        notifyDataSetChanged()
+    }
+```
+
+Для свойства `data` определим сеттер, который будет не только сохранять новое значение свойства, но и вызывать метод адаптера `notifyDataSetChanged()`. Данный метод оповещает `RecyclerView` о том, что данные изменились и `RecyclerViwe` получая такое сообщение автоматически перерисовывает свое содержимое.
+
+Далее необходимо предоставить информацию о том, сколько элементов будет содержаться в `RecyclerView`. Для этого необходимо переопределить метод `getItemCount()`, чтобы он возвращал общее число элементов в списке `data`.
+
+```kotlin
+override fun getItemCount() = data.size
+```
+
+**5. Предоставление информации об отрисовке элементов списка:**
+
+Далее необходимо предоставить информацию о том, каким образом элементы должны быть отрисованы. Для этого переопределяется метод `onBindViewHolder()`. Он принимает на вход два параметра: `ViewHolder` (в нашем случае `TextItemViewHolder`) и позицию элемента. Метод `onBindViewHolder()` будет вызван `RecyclerView` для отображения данных на элементе с определенной позицией в списке.
+
+```kotlin
+override fun onBindViewHolder(holder: TextItemViewHolder, position: Int) {
+    val item = data[position]
+    holder.textView.text = item.sleepQuality.toString()
+}
+```
+
+Для обновления данных на элементе `TextItemViewHolder` необходимо сперва получить экземпляр модели `SleepNight` из списка `data` по позиции. А затем получить, например, значение `sleepQuality` и записать его в `TextView` "холдера", который отвечает за отображение элемента в списке. Значение `sleepQuality` используется исключительно для демонстрации того, как получить данные и поместить их в вид элемента списка.
+
+Таким образом мы создали адаптер и настроили для `RecyclerView` возможность получения информации о количестве элементов, и о том, как данные должны помещаться на вид каждого из элементов. 
+
+**6. Добавление метода создания экземпляров `TextItemViewHolder`:**
+
+Далее перейдем к переопределению метода для создания экземпляров `ViewHolder` — `onCreateViewHolder()`.
+
+```kotlin
+override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TextItemViewHolder {
+    val layoutInflater = LayoutInflater.from(parent.context)
+    val view = layoutInflater
+            .inflate(R.layout.text_item_view, parent, false) as TextView
+    return TextItemViewHolder(view)
+}
+```
+
+Метод принимает на вход два параметра. Первый — родительский UI-элемент типа `ViewGroup`, куда будет помещен создаваемый `ViewHolder`. В нормальной ситуации это именно компонент `RecyclerView`. Второй параметр — тип, используемый, когда `RecyclerView` отображает визуальные элементы разных типов и видов. Например, когда `RecyclerView` может отображать в одном списке элементы с текстом, и элементы с изображениями одновременно.
+
+Точно так же как и для инициализации вида фрагментов, здесь для инициализации вида `ViewHolder` используется `LayoutInflater` и метод `inflate()`. Метод `inflate()` загружает макет вида элемента списка, инициализирует его и возвращает. В данном случае вид элемента списка — это экземпляр класса `TextView`. В конце возвращаем новый экземпляр "холдера" `TextItemViewHolder`. Конструктор `TextItemViewHolder` принимает на вход экземпляр `TextView`, передаем экземпляр полученный вызовом `inflate()`.
+
+Загружаемый макет `text_item_view.xml` "холдера" содержит лишь один компонент `TextView`.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:textSize="24sp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" />
+```
+
+Таким образом мы подготовили метод для создания экземпляров `ViewHolder`-компонентов, которые будут использоваться `RecyclerView` для отображения в списке. Сам `RecyclerView` ничего не знает том, как выглядят элементы внутри него. Он лишь запрашивает адаптер на создание элементов, а адаптер уже предоставляет всю информацию об элементах: их количестве, создании "холдеров" и об отрисовке данных на "холдерах".
+
+**7. Установка адаптера для `RecyclerView`:**
+
+Осталось создать экземпляр адаптера и установить его для добавленного ранее `RecyclerView`. Для этого необходимо в классе `SleepTrackerFragment` в методе `onCreateView()` добавить инициализацию адаптера и установку с помощью поля `binding`.
+
+```kotlin
+// SleepTrackerFragment.onCreateView()
+
+val adapter = SleepNightAdapter()
+binding.sleepList.adapter = adapter
+```
+
+Таким образом адаптер установлен в `RecyclerView` и все данные из адаптера автоматически будут отображаться в `RecyclerView` с помощью `ViewHolder`-компонентов.
+
+Чтобы адаптер содержал некоторые данные необходимо проинициализировать его поле `data`, когда данные в БД меняются. Поскольку доступ к данным в БД осуществляется через объект `ViewModel`, то необходимо добавить подписку на изменение этих данных.
+
+```kotlin
+viewModel.nights.observe(viewLifecycleOwner, Observer { nights ->
+    if (nights != null)
+        adapter.data = nights
+})
+```
+
+Если запустить приложение, то можно убедиться, что при нажатии кнопки "Start" в список на экране добавляется один элемент, отображающий "-1" — это оценка сна по умолчанию. После нажатия кнопки "Stop" открывается экран выбора оценки и после выбора запись на странице со списком обновляется и отображает ту оценку, что выбрал пользователь. Этот тест показывает, что добавленный `RecyclerView` работает. Он получает данные из адаптера (который в свою очередь получает их из БД через `ViewModel`). Адаптер и `ViewHolder` также предоставляют для `RecyclerView` информацию о том, как должны выглядеть элементы списка и как их создать.
+
+**8. Повторное использование экземпляров `ViewHolder`:**
+
+Чтобы продемонстрировать каким образом элементы списка `RecyclerView` переипользуются, необходимо добавить условие, что если качество сна менее двойки, то окрашивать оценку сна красным цветом. 
+
+```kotlin
+override fun onBindViewHolder(holder: TextItemViewHolder, position: Int) {
+    val item = data[position]
+    if (item.sleepQuality < 2) {
+        holder.textView.setTextColor(Color.RED)
+    }
+    holder.textView.text = item.sleepQuality.toString()
+}
+```
+
+Если запустить приложение и добавить столько элементов в список, что они не будут помещаться на экране все одновременно, то  можно заметить при добавлении новых элементов, что уже ранее добавленные элементы с оценкой 2 и выше окрашиваются красным, хотя не должны. Это происходит из-за переиспользования экземпляров `ViewHolder`-объектов, у которых уже установлен цвет, но переопределяется значение текста. Чтобы избежать подобных проблем, нужно сбрасывать состояние элементов в состояние по умолчанию. 
+
+В данном случае, необходимо для элементов с оценкой 3 и выше устанавливать черный цвет текста.
+
+```kotlin
+if (item.sleepQuality < 2) {
+    holder.textView.setTextColor(Color.RED)
+} else {
+    holder.textView.setTextColor(Color.BLACK)
+}
+```
+
+Теперь при запуске приложения и добавлении новых элементов можно заметить, что проблемы с неверным окрашиванием элементов списка нет.
+
+## Отображение записей `SleepNight` в списке `RecyclerView`
 
 // In Progress 
 
