@@ -365,6 +365,72 @@ override fun onBindViewHolder(holder: SleepNightViewHolder, position: Int) {
 
 ## Рефакторинг класса `SleepNightAdapter`
 
-// In Progress 
+Если посмотреть на класс `SleepNightAdapter`, то можно заметить, что он требует небольшого рефакторинга. Так, например, метод `onBindViewHolder` содержит код изменяющий внешний вид компонента `ViewHolder` и логичнее было бы перенести этот код в класс `SleepNightViewHolder`. Кроме того так мы будем соответствовать принципу инкапсуляции кода.
 
+**1. Рефакторинг `onBindViewHolder():`**
 
+Изменение свойств класса `SleepNightViewHolder` можно поместить в отдельный метод самого класса. Назвать его можно `bind()`. Кроме этого, переменную `res` можно сделать приватным свойством класса. Остальные свойства необходимо сделать приватными, чтобы следовать принципу инкапсуляции и не предоставлять прямой доступ к свойствам другим классам.
+
+```kotlin
+// SleepNightViewHolder
+
+private val res: Resources = itemView.context.resources
+private val sleepLength: TextView = itemView.findViewById(R.id.sleep_length)
+private val quality: TextView = itemView.findViewById(R.id.quality_string)
+private val qualityImage: ImageView = itemView.findViewById(R.id.quality_image)
+
+fun bind(item: SleepNight) {
+    sleepLength.text = convertDurationToFormatted(item.startTimeMillis, item.endTimeMillis, res)
+    quality.text = convertNumericQualityToString(item.sleepQuality, res)
+    qualityImage.setImageResource(when (item.sleepQuality) {
+        0 -> R.drawable.ic_sleep_0
+        1 -> R.drawable.ic_sleep_1
+        2 -> R.drawable.ic_sleep_2
+        3 -> R.drawable.ic_sleep_3
+        4 -> R.drawable.ic_sleep_4
+        5 -> R.drawable.ic_sleep_5
+        else -> R.drawable.ic_sleep_active
+    })
+}
+```
+
+В методе `onBindViewHolder()` останется только вызов этого метода с передачей объекта `SleepNight` как параметра.
+
+```kotlin
+// SleepNightAdapter
+
+override fun onBindViewHolder(holder: SleepNightViewHolder, position: Int) {
+    val item = data[position]
+    holder.bind(item)
+}
+```
+
+После выполнения рефакторинга необходимо запустить приложение, чтобы убедиться, что оно продолжает работать правильно.
+
+**2. Рефакторинг `onCreateViewHolder():`**
+
+Кроме выделения кода `onBindViewHolder()` в класс "холдера", туда же можно вынести и код метода `onCreateViewHolder()`. Таким образом будет инкапсулирована логика создания экземпляра `SleepNightViewHolder`.
+
+Методу можно дать имя `from()` по аналогии с методом `LayoutInflater.from()`. Метод будет возвращать экземпляр `SleepNightViewHolder`, необходимый для `onCreateViewHolder()`, а принимать на вход будет экземпляр класса `ViewGroup` — родительского элемента.  
+Поскольку метод создает новый экземпляр класса `SleepNightViewHolder`, нет смысла вызывать его на экземпляре класса, логичнее было бы вызывать его на самом классе. Поэтому определение метода помещается в блок `companion object`.
+
+```kotlin
+companion object {
+    fun from(parent: ViewGroup): SleepNightViewHolder {
+        val layoutInflater = LayoutInflater.from(parent.context)
+        val view = layoutInflater
+                .inflate(R.layout.list_item_sleep_night, parent, false)
+        return SleepNightViewHolder(view)
+    }
+}
+```
+
+В методе `onCreateViewHolder()` остается только лишь вызов `SleepNightViewHolder.from()`.
+
+```kotlin
+override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SleepNightViewHolder {
+    return SleepNightViewHolder.from(parent)
+}
+```
+
+После выполнения рефакторинга также необходимо запустить приложение, чтобы убедиться, что оно продолжает работать правильно.
