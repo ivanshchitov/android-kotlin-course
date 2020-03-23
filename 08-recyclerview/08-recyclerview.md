@@ -6,6 +6,7 @@
 - [Шаблон проектирования "Адаптер"](#шаблон-проектирования-адаптер)
 - [Добавление `RecyclerView`](#добавление-recyclerview)
 - [Отображение записей `SleepNight` в списке `RecyclerView`](#отображение-записей-sleepnight-в-списке-recyclerview)
+- [Рефакторинг класса `SleepNightAdapter`](#рефакторинг-класса-sleepnightadapter)
 
 ## Введение
 
@@ -226,6 +227,143 @@ if (item.sleepQuality < 2) {
 Теперь при запуске приложения и добавлении новых элементов можно заметить, что проблемы с неверным окрашиванием элементов списка нет.
 
 ## Отображение записей `SleepNight` в списке `RecyclerView`
+
+В предыдущей главе научились добавлять `RecyclerView` с адаптером и `ViewHolder`'ом для отображения конкретных данных на отдельных элементах списка. В этой главе подробнее пойдет речь о `ViewHolder`'ах, о создании собственного сложного `ViewHolder`-класса.
+
+Прежде чем создавать собственный сложный `ViewHolder`-класс рассмотрим класс `TextItemViewHolder`, что используется на данный момент.
+
+```kotlin
+class TextItemViewHolder(val textView: TextView): RecyclerView.ViewHolder(textView)
+```
+
+Класс наследуется от `RecyclerView.ViewHolder`, имеет лишь одной свойство `textView` и не имеет тела. То есть вся реализация данного класса заключается в реализации его родителя `RecyclerView.ViewHolder`.
+
+Если заглянуть в реализацию или [документацию](https://developer.android.com/reference/android/support/v7/widget/RecyclerView.ViewHolder) класса `RecyclerView.ViewHolder`, можно найти свойства и методы, общие для `ViewHolder`-классов.
+
+Например, каждый `ViewHoler` содержит свойство `itemView`. Объект `itemView` который является видом элемента списка и экземпляром класса `View`, который должен быть отображен внутри `RecyclerView`. В случае с `TextItemViewHolder` таким видом является `TextView`, который передается в конструктор класса.
+
+Перейдем к созданию собственного `ViewHolder`-класса.
+
+**1. Добавление макета для `ViewHolder`:**
+
+Сперва необходимо добавить макет элемента списка, который будет макетом для нового `ViewHolder`-класса. Файл с макетом будет называться `list_item_sleep_night.xml`.
+
+Макет должен содержать один элемент `ImageView` для отображения иконки оценки сна и два текстовых поля `TextView` для отображения даты сна и текстового представления оценки.
+
+![](list_item_sleep_night.png)
+
+Компонент `ImageView` для отображения иконки:
+
+```xml
+<ImageView
+    android:id="@+id/quality_image"
+    android:layout_width="@dimen/icon_size"
+    android:layout_height="60dp"
+    android:layout_marginStart="16dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" 
+    tools:srcCompat="@drawable/ic_sleep_5"/>
+```
+
+Компонент `TextView` для отображения даты сна:
+
+```xml
+<TextView
+    android:id="@+id/sleep_length"
+    android:layout_width="0dp"
+    android:layout_height="20dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="16dp"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toEndOf="@+id/quality_image"
+    app:layout_constraintTop_toTopOf="@+id/quality_image"
+    tools:text="Wednesday" />
+```
+
+Компонент `TextView` для отображения текстового представления оценки:
+
+```xml
+<TextView
+    android:id="@+id/quality_string"
+    android:layout_width="0dp"
+    android:layout_height="20dp"
+    android:layout_marginTop="8dp"
+    app:layout_constraintEnd_toEndOf="@+id/sleep_length"
+    app:layout_constraintStart_toStartOf="@+id/sleep_length"
+    app:layout_constraintTop_toBottomOf="@+id/sleep_length"
+    tools:text="Excellent!!!" />
+```
+
+Подробно на каждом атрибуте останавливаться не будем. Все было рассмотрено в предыдущих уроках.
+
+**2. Создание класса `SleepNightViewHolder`:**
+
+Далее необходимо создать класс `SleepNightViewHolder` и унаследовать его от `RecyclerView.ViewHolder`.
+
+```kotlin
+class SleepNightViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    val qualityImage: ImageView = itemView.findViewById(R.id.quality_image)
+    val sleepLength: TextView = itemView.findViewById(R.id.sleep_length)
+    val quality: TextView = itemView.findViewById(R.id.quality_string)
+}
+```
+
+Класс содержит свойства `qualityImage`, `sleepLength` и `quality`, которе инициализируются с помощью `findViewById()` и являются компонентами, которые добавлялись на макет элемента списка `list_item_sleep_night.xml`.
+
+**3. Использование `SleepNightViewHolder` в классе `SleepNightAdapter`:**
+
+Далее необходимо заменить использование `TextItemViewHolder` в классе `SleepNightAdapter` на использование `SleepNightViewHolder`.
+
+Во-первых, необходимо обновить метод `onCreateViewHolder()`: заменить тип возвращаемого значения, ссылку на ресурс с макетом "холдера" и создание экземпляра "холдера".
+
+```kotlin
+override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SleepNightViewHolder {
+    val layoutInflater = LayoutInflater.from(parent.context)
+    val view = layoutInflater
+            .inflate(R.layout.list_item_sleep_night, parent, false)
+    return SleepNightViewHolder(view)
+}
+```
+
+Во-вторых, требуется обновить реализацию метода `onBindViewHolder()`. Метод должен принимать на вход экземпляр `SleepNightViewHolder` и настраивать его вид в соответствии с данными.
+
+```kotlin
+override fun onBindViewHolder(holder: SleepNightViewHolder, position: Int) {
+    val item = data[position]
+    val res = holder.itemView.context.resources
+    holder.sleepLength.text = convertDurationToFormatted(item.startTimeMillis, item.endTimeMillis, res)
+    holder.quality.text = convertNumericQualityToString(item.sleepQuality, res)
+    holder.qualityImage.setImageResource(when (item.sleepQuality) {
+        0 -> R.drawable.ic_sleep_0
+        1 -> R.drawable.ic_sleep_1
+        2 -> R.drawable.ic_sleep_2
+        3 -> R.drawable.ic_sleep_3
+        4 -> R.drawable.ic_sleep_4
+        5 -> R.drawable.ic_sleep_5
+        else -> R.drawable.ic_sleep_active
+    })
+}
+```
+
+Метод выполняет настройку текстовых полей `sleepLength` и `quality`, используя статические функции из файла `Util.kt`. Функция `convertNumericQualityToString()` уже добавлена заранее. А функцию `convertDurationToFormatted()` необходимо добавить вручную. Ее исходный код можно взять [здесь](https://github.com/udacity/andfun-kotlin-sleep-tracker-with-recyclerview/blob/Step.04-Solution-Display-SleepQuality-List/app/src/main/java/com/example/android/trackmysleepquality/Util.kt#L51). Кроме этого требуется добавить строки:
+
+```xml
+<string name="minutes_length">%d minutes on %s</string>
+<string name="hours_length">%d hours on %s</string>
+<string name="seconds_length">%d seconds on %s</string>
+```
+
+И ресурс с иконкой `ic_sleep_active` [отсюда](https://github.com/udacity/andfun-kotlin-sleep-tracker-with-recyclerview/blob/Step.04-Solution-Display-SleepQuality-List/app/src/main/res/drawable/ic_sleep_active.xml).
+
+Кроме настройки текстовых полей, метод выполняет установку иконки оценки сна из ресурсов, в зависимости от значения поля `sleepQuality` записи данных.
+
+Если запустить приложение, то можно удостовериться, что код работает. `RecyclerView` отображает список из элементов, где каждый элемент обладает видом, созданного класса `SleepNightViewHolder`. При добавлении новых записей иконки и текст на элементах обновляется.
+
+## Рефакторинг класса `SleepNightAdapter`
 
 // In Progress 
 
