@@ -69,7 +69,7 @@ class SleepTrackerFragment : Fragment() {
         viewModel.nightsString.observe(viewLifecycleOwner, Observer { nightsString ->
             binding.textview.text = nightsString
         })
-        viewModel.navigateToSleepQuality.observe(this, Observer { night ->
+        viewModel.navigateToSleepQuality.observe(viewLifecycleOwner, Observer { night ->
             if (night != null) {
                 this.findNavController().navigate(
                         SleepTrackerFragmentDirections
@@ -77,13 +77,13 @@ class SleepTrackerFragment : Fragment() {
                 viewModel.doneNavigating()
             }
         })
-        viewModel.startButtonVisible.observe(this, Observer { visible ->
+        viewModel.startButtonVisible.observe(viewLifecycleOwner, Observer { visible ->
             binding.startButton.isEnabled = visible
         })
-        viewModel.stopButtonVisible.observe(this, Observer { visible ->
+        viewModel.stopButtonVisible.observe(viewLifecycleOwner, Observer { visible ->
             binding.stopButton.isEnabled = visible
         })
-        viewModel.clearButtonVisible.observe(this, Observer { visible ->
+        viewModel.clearButtonVisible.observe(viewLifecycleOwner, Observer { visible ->
             binding.clearButton.isEnabled = visible
         })
 

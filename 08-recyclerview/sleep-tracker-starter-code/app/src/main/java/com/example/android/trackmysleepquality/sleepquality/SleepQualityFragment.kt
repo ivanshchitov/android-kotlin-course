@@ -53,7 +53,7 @@ class SleepQualityFragment : Fragment() {
 
         val application = requireNotNull(this.activity).application
 
-        val args = SleepQualityFragmentArgs.fromBundle(arguments!!)
+        val args = SleepQualityFragmentArgs.fromBundle(requireArguments())
         val dao = SleepDatabase.getInstance(application).getSleepDatabaseDao()
         val viewModelFactory = SleepQualityViewModelFactory(args.sleepNightKey, dao)
         val viewModel = ViewModelProvider(this, viewModelFactory)
@@ -68,7 +68,7 @@ class SleepQualityFragment : Fragment() {
             }
         }
 
-        viewModel.navigateToSleepTracker.observe(this,  Observer { shouldNavigate ->
+        viewModel.navigateToSleepTracker.observe(viewLifecycleOwner,  Observer { shouldNavigate ->
             if (shouldNavigate!!) {
                 this.findNavController().navigate(SleepQualityFragmentDirections
                         .actionSleepQualityFragmentToSleepTrackerFragment())
