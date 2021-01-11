@@ -133,6 +133,7 @@ class MainActivity : AppCompatActivity() {
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:textSize="30sp"
         android:text="1" />
 
@@ -195,11 +196,11 @@ rollButton.setOnClickListener {
 
 ### Добавление изображения костей
 
-Для завершения приложение не хватает отображения картинки с игральным кубиком вместо обычного числа. Для добавления изображения необходимо: добавить заранее подготовленные файлы изображений в каталог ресурсов `drawables`, заменить компонент для отображения текста `TextView` на компонент `ImageView`, обновить обработчик нажатия на кнопку "Roll" для смены изображения в зависимости от сгенерированного числа.
+Для завершения приложение не хватает отображения картинки с игральным кубиком вместо обычного числа. Для добавления изображения необходимо: добавить заранее подготовленные файлы изображений в каталог ресурсов `drawable`, заменить компонент для отображения текста `TextView` на компонент `ImageView`, обновить обработчик нажатия на кнопку "Roll" для смены изображения в зависимости от сгенерированного числа.
 
-**1. Добавление изображений в каталог `drawables`:**
+**1. Добавление изображений в каталог `drawable`:**
 
-Скачать файлы с изображениями игральной кости по ссылке https://github.com/udacity/andfun-kotlin-dice-roller/raw/master/DiceImages.zip, и добавить файлы в каталог `res/drawables`.
+Скачать файлы с изображениями игральной кости по ссылке https://github.com/udacity/andfun-kotlin-dice-roller/raw/master/DiceImages.zip, и добавить файлы в каталог `res/drawable`.
 
 **2. Замена `TextView` на `ImageView`:**
 
@@ -260,14 +261,14 @@ Gradle-файл проекта определяет репозитории и з
 
 ```gradle
 buildscript {
-    ext.kotlin_version = '1.3.50'
+    ext.kotlin_version = '1.4.21'
     repositories {
         google()
         jcenter()
         
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.3'
+        classpath 'com.android.tools.build:gradle:4.1.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -284,16 +285,17 @@ allprojects {
 Пример `build.gradle` для модуля `app` представлен ниже.
 
 ```gradle
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     defaultConfig {
         applicationId "org.example.diceroller"
         minSdkVersion 19
-        targetSdkVersion 28
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
     }
@@ -308,16 +310,24 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'androidx.core:core-ktx:1.0.2'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 }
 ```
 
-Директивы `apply plugin` описывают плагины, которые должны быть включены в проект:
+
+Блок `plugins` описывает плагины, которые должны быть включены в проект:
+
 * `com.android.application` — объявляет проект как Android-приложение.
 * `kotlin-android` — включает использование языка Kotlin для Android-проекта.
-* `kotlin-android-extensions` — включает использование расширений для Android-проекта на Kotlin.
+
+В более старых версиях Gradle плагины добавлялись не целым блоком, а каждый отдельно с помощью директивы `apply plugin`. Например,
+
+```
+apply plugin: 'com.android.application'
+```
 
 Блок `android` описывает параметры сборки проекта под Android: 
 * `compileSdkVersion` — уровень Android API для компиляции. Должно совпадать с `targetSdkVersion`.
