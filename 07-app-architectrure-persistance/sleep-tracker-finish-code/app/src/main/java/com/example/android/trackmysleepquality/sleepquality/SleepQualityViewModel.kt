@@ -24,7 +24,7 @@ import kotlinx.coroutines.*
 
 class SleepQualityViewModel(
         private val nightKey: Long = 0L,
-        val dao: SleepDatabaseDao) : ViewModel() {
+        private val dao: SleepDatabaseDao) : ViewModel() {
 
     private val viewModelJob = Job()
     private val uiScope =  CoroutineScope(Dispatchers.Main + viewModelJob)
