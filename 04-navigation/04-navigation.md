@@ -60,7 +60,7 @@ class ExampleFragment : Fragment() {
 }
 ```
 
-Для добавления фрагмента в активность необходимо описать тег `<fragment>` в макете активности.
+Для добавления фрагмента в активность необходимо описать тег `<androidx.fragment.app.FragmentContainerView>` в макете активности.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -68,7 +68,8 @@ class ExampleFragment : Fragment() {
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <fragment android:name="com.example.news.ExampleFragment"
+    <androidx.fragment.app.FragmentContainerView
+            android:name="com.example.news.ExampleFragment"
             android:id="@+id/example_fragment"
             android:layout_weight="1"
             android:layout_width="0dp"
@@ -106,17 +107,17 @@ class ExampleFragment : Fragment() {
 
 ```kotlin
 override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                          savedInstanceState: Bundle?): View? {
+                          savedInstanceState: Bundle?): View {
     val binding = DataBindingUtil.inflate<FragmentTitleBinding>(
     	inflater, R.layout.fragment_title, container, false)
     return binding.root
 }
 ```
 
-И в конце необходимо поместить фрагмент с начальным экраном на `MainActivity`, чтобы его можно было отобразить.
+И в конце необходимо поместить фрагмент с начальным экраном на `MainActivity`, чтобы его можно было отобразить. В файл `activity_main.xml`:
 
 ```xml
-<fragment
+<androidx.fragment.app.FragmentContainerView
     android:id="@+id/titleFragment"
     android:name="com.example.android.navigation.TitleFragment"
     android:layout_width="match_parent"
@@ -137,7 +138,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 buildscript {
     ext {
         ...
-        version_navigation = '1.0.0'
+        version_navigation = '2.3.2'
         ...
     }
 }
@@ -148,8 +149,8 @@ buildscript {
 ```gradle
 dependencies {
     ...
-    implementation "android.arch.navigation:navigation-fragment-ktx:$version_navigation"     
-    implementation "android.arch.navigation:navigation-ui-ktx:$version_navigation"
+    implementation "androidx.navigation:navigation-fragment-ktx:$version_navigation"
+    implementation "androidx.navigation:navigation-ui-ktx:$version_navigation"
 }
 ```
 
@@ -165,7 +166,7 @@ dependencies {
 Для реализации навигации также необходимо добавить `NavHostragment` — контейнер, который будет информацию о пунктах назначения на графе навигации. Класс `NavHostragment` является стандартным. Чтобы его использовать, необходимо в описании макета `activity_main.xml` заменить использование `TitleFragment` на `NavHostFragment`.
 
 ```xml
-<fragment
+<androidx.fragment.app.FragmentContainerView
    android:id="@+id/navHostFragment"
    android:name="androidx.navigation.fragment.NavHostFragment"
    android:layout_width="match_parent"
@@ -180,7 +181,7 @@ dependencies {
 
 **4. Добавление фрагментов на граф навигации:**
 
-Для редактирования навигации используется редактор навигации. Он так же как и редактор макетов имеет два режима (две вкладки): **Design** и **Text**. Первый позволяет использовать элементы интерфейса IDE для редактирования графа навигации, второй предоставляет доступ к исходному XML-файлу графа.
+Для редактирования навигации используется редактор навигации. Он так же как и редактор макетов имеет два режима (две вкладки): **Design** и **Code**. Первый позволяет использовать элементы интерфейса IDE для редактирования графа навигации, второй предоставляет доступ к исходному XML-файлу графа. Кроме этого еще есть вкладка **Split**, которая делит рабочую область на две части: в одной код, во второй — графическое представление.
 
 Для добавления фрагмента на граф навигации необходимо в режиме **Design** необходимо нажать на кнопку `+` в верхнем левом углу и среди макетов выбрать необходимый, например, `fragment_title`. Миниатюра фрагмента появится в рабочей зоне графа навигации.  
 Далее необходимо сделать `TitleFragment` стартовым. Для этого необходимо нажать на кнопку **Assign start destination**, когда фрагмент выбран, либо указать `id` фрагмента в качестве атрибута **Start Destination** (`app:startDestination` в XML-коде) для самого графа навигации.
@@ -223,7 +224,7 @@ view.findNavController().navigate(R.id.action_gameFragment_to_gameOverFragment)
 
 **1. Настройка поведения системной кнопки "Назад":**
 
-Чтобы нажатие на системную кнопку "Назад" выполняло переход от `GameOverFragment` к `TitleFragment`, необходимо настроить атрибут **Pop Behavior**. Для этого нужно выбрать уже созданную связь между `GameFragment` и `GameOverFragment`, на панели атрибутов выбрать **Pop Behavior** -> **Pop To** -> **gameFragment** и установить галочку **Inclusive**. Настройка "поведения" определяет к какому фрагменту необходимо вернуться назад по выбранной связи (все фрагменты выше выбранного на стеке будут удалены), а галочка **Inclusive** говорит, что сам фрагмент `GameFragment` тоже нужно удалить со стека (это вернет пользователя на фрагмент `TitleFragment`).
+Чтобы нажатие на системную кнопку "Назад" выполняло переход от `GameOverFragment` к `TitleFragment`, необходимо настроить атрибут **Pop Behavior**. Для этого нужно выбрать уже созданную связь между `GameFragment` и `GameOverFragment`, на панели атрибутов выбрать **Pop Behavior** -> **popUpTo** -> **gameFragment** и установить галочку **popUpToInclusive**. Настройка "поведения" определяет к какому фрагменту необходимо вернуться назад по выбранной связи (все фрагменты выше выбранного на стеке будут удалены), а галочка **popUpToInclusive** говорит, что сам фрагмент `GameFragment` тоже нужно удалить со стека (это вернет пользователя на фрагмент `TitleFragment`).
 
 Аналогичное поведение необходимо реализовать и возврата с фрагмента `GameWonFragment` к `TitleFragment`.
 
@@ -231,7 +232,8 @@ view.findNavController().navigate(R.id.action_gameFragment_to_gameOverFragment)
 
 На экранах "Game Over" и "Congratulations" есть кнопки "Try Again" и "Next Match" соответственно. Эти кнопки должны позволять пользователю начать игру заново, т.е. возвращать пользователя к предыдущему экрану с вопросами `GameFragment`.
 
-Для этого необходимо протянуть новую связь от `GameOverFragment` к `GameFragment` и на панели атрибутов установить **Pop To** -> **titleFragment**. Затем необходимо перейти в класс `GameOverFragment` и установить обработчик кнопки "Try Again".
+Для этого необходимо протянуть новую связь от `GameOverFragment` к `GameFragment` и на панели атрибутов установить **Pop To** -> **titleFragment**. Здесь указывается возврат к **titleFragment** для того, чтобы в любой момент, когда показан фрагмент `GameOverFragment` можно было вернуться к `TitleFragment`. Иначе, на стеке может казаться множество `GameOverFragment` и по кнопке "Back" возврат будет происходить именно к ним.   
+Затем необходимо перейти в класс `GameOverFragment` и установить обработчик кнопки "Try Again".
 
 ```kotlin
 binding.tryAgainButton.setOnClickListener {
@@ -239,22 +241,29 @@ binding.tryAgainButton.setOnClickListener {
 }
 ```
 
-Аналогично необходимо создать связь между `GameWonFragment` и `GameFragment`, настроить **Popup Behavior** и установить обработчик нажатия на кнопку "Match Again".
+Аналогично необходимо создать связь между `GameWonFragment` и `GameFragment`, настроить **Pop Behavior** и установить обработчик нажатия на кнопку "Match Again".
 
 **3. Добавление кнопки "Назад" на Action Bar:**
 
 Кроме системной кнопки "Назад" Android поддерживает еще и кнопку "Назад", отображающуюся на Action Bar — панели сверху приложения. Для ее добавления необходимо внести изменения в `MainActivity`. Необходимо получить экземпляр `NavController` и использовать его для установки Action Bar:
 
 ```kotlin
-val navController = this.findNavController(R.id.navHostFragment)
-NavigationUI.setupActionBarWithNavController(this, navController)
+private lateinit var navController: NavController
+
+override fun onCreate(savedInstanceState: Bundle?) {
+    ...
+
+    val navHostFragment = supportFragmentManager.findFragmentById(R.id.navHostFragment) as NavHostFragment
+    navController = navHostFragment.navController
+
+    NavigationUI.setupActionBarWithNavController(this, navController)
+}
 ```
 
 Далее необходимо переопределить метод активности `onSupportNavigateUp()`:
 
 ```kotlin
 override fun onSupportNavigateUp(): Boolean {
-    val navController = this.findNavController(R.id.navHostFragment)
     return navController.navigateUp()
 }
 ```
@@ -287,7 +296,7 @@ Action Bar может содержать собственное меню. Обы
 
 ```kotlin
 override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                         savedInstanceState: Bundle?): View? {
+                         savedInstanceState: Bundle?): View {
    ...
    setHasOptionsMenu(true)
    return binding.root
@@ -297,9 +306,9 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 Для инициализации и установки меню из файла ресурса необходимо переопределить метод фрагмента `onCreateOptionsMenu()` и описать в нем загрузку меню из файла `overflow_menu`.
 
 ```kotlin
-override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater?) {
+override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
     super.onCreateOptionsMenu(menu, inflater)
-    inflater?.inflate(R.menu.overflow_menu, menu)
+    inflater.inflate(R.menu.overflow_menu, menu)
 }
 ```
 
@@ -309,8 +318,8 @@ override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater?) {
 Для этого требуется переопределить метод фрагмента `onOptionsItemSelected()`.
 
 ```kotlin
-override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-    return NavigationUI.onNavDestinationSelected(item!!, view!!.findNavController())
+override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    return NavigationUI.onNavDestinationSelected(item, requireView().findNavController())
             || super.onOptionsItemSelected(item)
 }
 ```
@@ -332,7 +341,7 @@ override fun onOptionsItemSelected(item: MenuItem?): Boolean {
 ```gradle
 dependencies {
     ...
-    classpath "android.arch.navigation:navigation-safe-args-gradle-plugin:$version_navigation"
+    classpath "androidx.navigation:navigation-safe-args-gradle-plugin:$version_navigation"
 }
 ```
 
@@ -391,7 +400,7 @@ view.findNavController().navigate(
 ```kotlin
 // GameWonFragment.onCreate
 
-val args = GameWonFragmentArgs.fromBundle(arguments)
+val args = GameWonFragmentArgs.fromBundle(requireArguments())
 Toast.makeText(context, "NumCorrect: ${args.numCorrect}, NumQuestions: ${args.numQuestions}",
                Toast.LENGTH_LONG).show()
 ```
@@ -434,7 +443,7 @@ implementation "com.google.android.material:material:$version_material"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <fragment
+        <androidx.fragment.app.FragmentContainerView
             android:id="@+id/navHostFragment"
             android:name="androidx.navigation.fragment.NavHostFragment"
             android:layout_width="match_parent"
@@ -494,7 +503,6 @@ NavigationUI.setupWithNavController(binding.navView, navController)
 
 ```kotlin
 override fun onSupportNavigateUp(): Boolean {
-    val navController = this.findNavController(R.id.navHostFragment)
     return NavigationUI.navigateUp(navController, drawerLayout)
 }
 ```
@@ -606,7 +614,7 @@ setHasOptionsMenu(true)
 ```kotlin
 // Creating our Share Intent
 private fun getShareIntent() : Intent {
-    val args = GameWonFragmentArgs.fromBundle(arguments)
+    val args = GameWonFragmentArgs.fromBundle(requireArguments())
     val shareIntent = Intent(Intent.ACTION_SEND)
         shareIntent.setType("text/plain")
             .putExtra(Intent.EXTRA_TEXT, getString(R.string.share_success_text,
@@ -620,8 +628,8 @@ private fun getShareIntent() : Intent {
 Для обработки нажатия необходимо переопределить метод `onOptionsItemSelected` и по нажатию на пункт меню "Share" вызывать системную активность, передавая ей созданный интент.
 
 ```kotlin
-override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-    when (item!!.itemId) {
+override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    when (item.itemId) {
         R.id.share -> startActivity(getShareIntent())
     }
     return super.onOptionsItemSelected(item)
@@ -637,14 +645,14 @@ override fun onOptionsItemSelected(item: MenuItem?): Boolean {
 Для того, чтобы решить проблему с падением, необходимо добавить проверку на доступность существующей активности для созданного интента. Если активности необходимой для интента нет в системе, то пункт меню "Share" логично будет скрыть.
 
 ```kotlin
-override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater?) {
+override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
     super.onCreateOptionsMenu(menu, inflater)
-    inflater?.inflate(R.menu.winner_menu, menu)
-    
+    inflater.inflate(R.menu.winner_menu, menu)
+
     // check if the activity resolves
-    if (null == getShareIntent().resolveActivity(activity!!.packageManager)) {
+    if (null == getShareIntent().resolveActivity(requireActivity().packageManager)) {
         // hide the menu item if it doesn't resolve
-        menu?.findItem(R.id.share)?.setVisible(false)
+        menu.findItem(R.id.share).isVisible = false
     }
 }
 ```
