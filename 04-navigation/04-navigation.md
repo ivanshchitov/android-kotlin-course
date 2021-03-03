@@ -60,7 +60,7 @@ class ExampleFragment : Fragment() {
 }
 ```
 
-Для добавления фрагмента в активность необходимо описать тег `<androidx.fragment.app.FragmentContainerView>` в макете активности.
+Для добавления фрагмента в активность необходимо описать тег `<fragment>` в макете активности.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -68,7 +68,7 @@ class ExampleFragment : Fragment() {
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <androidx.fragment.app.FragmentContainerView
+    <fragment
             android:name="com.example.news.ExampleFragment"
             android:id="@+id/example_fragment"
             android:layout_weight="1"
@@ -117,7 +117,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 И в конце необходимо поместить фрагмент с начальным экраном на `MainActivity`, чтобы его можно было отобразить. В файл `activity_main.xml`:
 
 ```xml
-<androidx.fragment.app.FragmentContainerView
+<fragment
     android:id="@+id/titleFragment"
     android:name="com.example.android.navigation.TitleFragment"
     android:layout_width="match_parent"
@@ -166,7 +166,7 @@ dependencies {
 Для реализации навигации также необходимо добавить `NavHostragment` — контейнер, который будет информацию о пунктах назначения на графе навигации. Класс `NavHostragment` является стандартным. Чтобы его использовать, необходимо в описании макета `activity_main.xml` заменить использование `TitleFragment` на `NavHostFragment`.
 
 ```xml
-<androidx.fragment.app.FragmentContainerView
+<fragment
    android:id="@+id/navHostFragment"
    android:name="androidx.navigation.fragment.NavHostFragment"
    android:layout_width="match_parent"
@@ -253,8 +253,7 @@ private lateinit var navController: NavController
 override fun onCreate(savedInstanceState: Bundle?) {
     ...
 
-    val navHostFragment = supportFragmentManager.findFragmentById(R.id.navHostFragment) as NavHostFragment
-    navController = navHostFragment.navController
+    navController = this.findNavController(R.id.navHostFragment)
 
     NavigationUI.setupActionBarWithNavController(this, navController)
 }
@@ -443,7 +442,7 @@ implementation "com.google.android.material:material:$version_material"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <androidx.fragment.app.FragmentContainerView
+        <fragment
             android:id="@+id/navHostFragment"
             android:name="androidx.navigation.fragment.NavHostFragment"
             android:layout_width="match_parent"
