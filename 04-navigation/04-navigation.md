@@ -138,7 +138,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 buildscript {
     ext {
         ...
-        version_navigation = '2.3.2'
+        version_navigation = '2.5.0-alpha01'
         ...
     }
 }
