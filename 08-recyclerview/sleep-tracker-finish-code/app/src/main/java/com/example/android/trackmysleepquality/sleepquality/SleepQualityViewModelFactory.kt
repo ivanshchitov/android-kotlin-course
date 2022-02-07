@@ -24,7 +24,7 @@ class SleepQualityViewModelFactory(
         private val sleepNightKey: Long,
         private val dao: SleepDatabaseDao) : ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SleepQualityViewModel::class.java)) {
             return SleepQualityViewModel(sleepNightKey, dao) as T
         }
