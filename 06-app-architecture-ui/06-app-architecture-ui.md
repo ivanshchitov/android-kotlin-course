@@ -218,7 +218,7 @@ fun onCorrect() {
 
 private fun gameFinished() {
     val action = GameFragmentDirections.actionGameToScore(viewModel.score.value ?: 0)
-    findNavController(this).navigate(action)
+    findNavController().navigate(action)
 }
 private fun updateWordText() {
     binding.wordText.text = viewModel.word.value
@@ -309,7 +309,7 @@ fun onCorrect() {
 ```kotlin
 private fun gameFinished() {
 //        val action = GameFragmentDirections.actionGameToScore(viewModel.score.value ?: 0)
-//        findNavController(this).navigate(action)
+//        findNavController().navigate(action)
     Toast.makeText(activity, "Game Finished", Toast.LENGTH_SHORT).show()
 }
 ```
@@ -528,7 +528,7 @@ class ScoreViewModel(finalScore: Int) : ViewModel() {
 ```kotlin
 class ScoreViewModelFactory(private val finalScore: Int) : ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ScoreViewModel::class.java)) {
             return ScoreViewModel(finalScore) as T
         }
