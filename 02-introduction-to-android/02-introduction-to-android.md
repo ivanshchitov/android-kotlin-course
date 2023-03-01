@@ -257,28 +257,41 @@ Gradle-файл проекта определяет репозитории и з
 Репозитории — хранилища, в которых будут искаться добавляемые зависимости.  
 Зависимости — библиотеки или инструменты, которые необходимы для работы проекта.
 
-Например, код ниже демонстрирует Gradle-файл проекта, создающийся по-умолчанию. Здесь описаны репозитории `google()` и `jcenter()`, использующиеся для доступа к зависимостям во всех модулях проекта. В качестве зависимостей здесь указаны идентификаторы Android Build Tools — инструментов для сборки Android-проектов, а также Kotlin-плагин для Gradle. Очевидно, обе эти зависимости необходимы для проекта в целом.
+Также часть конфигурации проекта располагается в файле `settings.gradle`.
+
+Код ниже демонстрирует файл проекта `settings.gradle`, создающийся по-умолчанию. Здесь описаны репозитории `google()`, `mavenCentral()` и `gradlePluginPortal()`, использующиеся для доступа к плагинам и зависимостям во всех модулях проекта. 
 
 ```gradle
-buildscript {
-    ext.kotlin_version = '1.4.21'
+pluginManagement {
     repositories {
         google()
-        jcenter()
-        
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        mavenCentral()
+        gradlePluginPortal()
     }
 }
-
-allprojects {
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
-        jcenter()
-        
+        mavenCentral()
     }
+}
+rootProject.name = "My Application"
+include ':app'
+```
+
+Блок `pluginManagement {}` описывает список репозиториев для загрузки плагинов для использования в рамках проекта.  
+Блок `dependencyResolutionManagement {}` описывает список репозиториев для загрузки библиотек зависимостей для использования в рамках проекта и его модулей.
+Также здесь описывается имя проекта `rootProject.name` и список модулей. В данном примере лишь один модуль `:app`, но если бы их было больше, они бы были перечислены через запятую.
+
+Пример файла `build.gradle` проекта описывает объявления плагинов для сборки и разработки.
+
+```gradle
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    id 'com.android.application' version '7.4.0' apply false
+    id 'com.android.library' version '7.4.0' apply false
+    id 'org.jetbrains.kotlin.android' version '1.8.20-Beta' apply false
 }
 ```
 
@@ -287,33 +300,52 @@ allprojects {
 ```gradle
 plugins {
     id 'com.android.application'
-    id 'kotlin-android'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
-    compileSdkVersion 30
+    namespace 'com.example.myapplication'
+    compileSdk 33
+
     defaultConfig {
-        applicationId "org.example.diceroller"
-        minSdkVersion 19
-        targetSdkVersion 30
+        applicationId "com.example.myapplication"
+        minSdk 24
+        targetSdk 33
         versionCode 1
         versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        viewBinding true
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.3.2'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'com.google.android.material:material:1.2.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.5.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.4.1'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.4.1'
+    implementation 'androidx.core:core-ktx:+'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
 ```
 
@@ -330,12 +362,11 @@ apply plugin: 'com.android.application'
 ```
 
 Блок `android` описывает параметры сборки проекта под Android: 
-* `compileSdkVersion` — уровень Android API для компиляции. Должно совпадать с `targetSdkVersion`.
-* `applicationId` — уникальный идентификатор пакета приложения для публикации в системе Android.
-* `minSdkVersion` — минимальный уровень Android API требуемый для работы приложения.
-* `targetSdkVersion` — целевой уровень Android API требуемый для работы приложения.
+* `namespace` — уникальный идентификатор пакета приложения для публикации в системе Android.
+* `compileSdk` — уровень Android API для компиляции. Должно совпадать с `targetSdkVersion`.
+* `minSdk` — минимальный уровень Android API требуемый для работы приложения.
+* `targetSdk` — целевой уровень Android API требуемый для работы приложения.
 * `versionCode` — кодовое число версии приложения. Используется для идентификации версии приложения в системе Android.
 * `versionName` — текстовое название версии приложения. Версия, которая показывается пользователю.
 * `buildTypes` — блок, описывающий параметры сборки и цифровой подписи приложения.
-
-Блок `dependencies` описывает зависимости от библиотек, необходимых приложению. Зависимости задаются идентификаторами библиотек в репозиториях, включенных в Gradle-файле проекта.
+* `dependencies` — блок, описывающий зависимости от библиотек, необходимых проекту. Зависимости задаются идентификаторами библиотек в репозиториях, включенных в Gradle-файле проекта.
