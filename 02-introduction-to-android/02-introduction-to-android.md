@@ -28,7 +28,7 @@ Android Studio — специальная среда разработки под
 Для создания нового проекта необходимо выполнить следующие шаги:
 
 Запустить Android Studio -> "Start a new Android Studio project".  
-Choose your project -> Empty Activity -> Next.  
+Choose your project -> Empty Views Activity -> Next.  
 
 Configure your project ->  
 Name: Dice Roller  
@@ -36,6 +36,7 @@ Package: `com.example.android.diceroller`
 Project location: путь до каталога с проектом в файловой системе  
 Language: Kotlin  
 Minimum API: минимальный уровень API (версия Android)  
+Build configuration language: Groovy DSL (build.grandle)  
 -> Finish
 
 Проект нового приложения создан. Для его запуска необходимо либо подключить реальное Android-устройство, либо установить и запустить эмулятор.
@@ -74,7 +75,7 @@ Verify Configuration -> AVD Name -> pixel2-api28 -> Finish.
 
 Модуль `app` содержит разделы:
 * `manifests` — содержит файл манифеста приложения `AndroidManifest.xml`,
-* `java` — содержит исходный код приложения на языке Java или Kotlin,
+* `kotlin+java` — содержит исходный код приложения на языке Java или Kotlin,
 * `res` — содержит ресурсы приложения, такие как изображения, иконки, переводимые строки, файлы разметки интерфейса и др.
 
 Манифест `AndroidManifest.xml` располагается в корневом каталоге проекта. Он содержит важную информацию о приложении, которая требуется системе Android для выполнения какого-либо кода приложения. Среди прочего файл манифеста выполняет следующее:
