@@ -17,11 +17,10 @@
 package com.example.android.trackmysleepquality.sleeptracker
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.map
 import com.example.android.trackmysleepquality.database.SleepDatabaseDao
 import com.example.android.trackmysleepquality.database.SleepNight
 import com.example.android.trackmysleepquality.formatNights
@@ -31,8 +30,8 @@ import kotlinx.coroutines.*
  * ViewModel for SleepTrackerFragment.
  */
 class SleepTrackerViewModel(
-        val dao: SleepDatabaseDao,
-        application: Application) : AndroidViewModel(application) {
+    private val dao: SleepDatabaseDao,
+    application: Application) : AndroidViewModel(application) {
 
     private var viewModelJob = Job()
 
@@ -41,22 +40,22 @@ class SleepTrackerViewModel(
     private var tonight = MutableLiveData<SleepNight?>()
     val nights = dao.getAllNights()
 
-    private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
-    val navigateToSleepQuality: LiveData<SleepNight>
+    private val _navigateToSleepQuality = MutableLiveData<SleepNight?>()
+    val navigateToSleepQuality: LiveData<SleepNight?>
         get() = _navigateToSleepQuality
 
-    val nightsString = Transformations.map(nights) { nights ->
+    val nightsString = nights.map { nights ->
         formatNights(nights, application.resources)
     }
 
-    val startButtonVisible = Transformations.map(tonight) { tonight ->
+    val startButtonVisible = tonight.map { tonight ->
         tonight == null
     }
-    val stopButtonVisible = Transformations.map(tonight) { tonight ->
+    val stopButtonVisible = tonight.map { tonight ->
         tonight != null
     }
-    val clearButtonVisible = Transformations.map(nights) { nights ->
-        nights != null && nights.isNotEmpty()
+    val clearButtonVisible = nights.map { nights ->
+        nights.isNotEmpty()
     }
 
     init {
