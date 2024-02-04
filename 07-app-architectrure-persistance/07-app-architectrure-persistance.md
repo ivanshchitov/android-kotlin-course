@@ -747,8 +747,8 @@ viewModel.nightsString.observe(viewLifecycleOwner, Observer { nightsString ->
 Подобно тому, как это делалось ранее, добавляется свойство-событие `navigateToSleepQuality`. Изменение этого свойства будет индикатором того, что необходимо перейти к фрагменту оценки сна.
 
 ```kotlin
-private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
-val navigateToSleepQuality: LiveData<SleepNight>
+private val _navigateToSleepQuality = MutableLiveData<SleepNight?>()
+val navigateToSleepQuality: LiveData<SleepNight?>
     get() = _navigateToSleepQuality
 ```
 
