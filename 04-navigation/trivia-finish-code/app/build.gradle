@@ -21,12 +21,12 @@ apply plugin: "androidx.navigation.safeargs.kotlin"
 
 android {
     namespace 'com.example.android.navigation'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId 'com.example.android.navigation'
-        minSdk 19
-        targetSdk 34
+        minSdk 28
+        targetSdk 35
         vectorDrawables.useSupportLibrary = true
         versionCode 1
         versionName "1.0"
@@ -44,11 +44,11 @@ android {
     productFlavors {
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 }
 
@@ -58,11 +58,11 @@ dependencies {
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22"
     // Constraint Layout
-    implementation "androidx.constraintlayout:constraintlayout:$version_constraint_layout"
+    implementation "androidx.constraintlayout:constraintlayout:2.2.0"
     // Core
-    implementation "androidx.core:core-ktx:1.12.0"
+    implementation "androidx.core:core-ktx:1.15.0"
     // Material Design
-    implementation "com.google.android.material:material:1.11.0"
+    implementation "com.google.android.material:material:1.12.0"
     // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:$version_navigation"
     implementation "androidx.navigation:navigation-ui-ktx:$version_navigation"

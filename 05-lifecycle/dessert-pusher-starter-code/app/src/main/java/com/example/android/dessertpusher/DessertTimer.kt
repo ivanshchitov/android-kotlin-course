@@ -17,7 +17,7 @@
 //package com.example.android.dessertpusher
 //
 //import android.os.Handler
-//import timber.log.Timber
+//import android.util.Log
 //
 ///**
 // * This is a class representing a timer that you can start or stop. The secondsCount outputs a count of
@@ -51,7 +51,7 @@
 //        // Create the runnable action, which prints out a log and increments the seconds counter
 //        runnable = Runnable {
 //            secondsCount++
-//            Timber.i("Timer is at : $secondsCount")
+//            Log.i("DessertTimer", "Timer is at : $secondsCount")
 //            // postDelayed re-adds the action to the queue of actions the Handler is cycling
 //            // through. The delayMillis param tells the handler to run the runnable in
 //            // 1 second (1000ms)

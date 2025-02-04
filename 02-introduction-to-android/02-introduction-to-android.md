@@ -277,7 +277,7 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "My Application"
+rootProject.name = "Dice Roller"
 include ':app'
 ```
 
@@ -290,28 +290,29 @@ include ':app'
 ```gradle
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    id 'com.android.application' version '7.4.0' apply false
-    id 'com.android.library' version '7.4.0' apply false
-    id 'org.jetbrains.kotlin.android' version '1.8.20-Beta' apply false
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
 }
 ```
+
+Здесь `libs.plugins.android.application` и `libs.plugins.kotlin.android` — ссылки на объекты, описанные в файле `libs.versions.toml`.
 
 Пример `build.gradle` для модуля `app` представлен ниже.
 
 ```gradle
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
-    namespace 'com.example.myapplication'
-    compileSdk 33
+    namespace 'org.example.diceroller'
+    compileSdk 35
 
     defaultConfig {
-        applicationId "com.example.myapplication"
-        minSdk 24
-        targetSdk 33
+        applicationId "org.example.diceroller"
+        minSdk 28
+        targetSdk 35
         versionCode 1
         versionName "1.0"
 
@@ -325,11 +326,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
     buildFeatures {
         viewBinding true
@@ -337,30 +338,23 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.7.0'
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'com.google.android.material:material:1.5.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.4.1'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.4.1'
-    implementation 'androidx.core:core-ktx:+'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.activity
+    implementation libs.androidx.constraintlayout
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
 }
 ```
 
 
-Блок `plugins` описывает плагины, которые должны быть включены в проект:
+Блок `plugins` описывает ссылки на описание плагинов в файле `libs.versions.toml`, которые должны быть включены в проект:
 
 * `com.android.application` — объявляет проект как Android-приложение.
 * `kotlin-android` — включает использование языка Kotlin для Android-проекта.
 
-В более старых версиях Gradle плагины добавлялись не целым блоком, а каждый отдельно с помощью директивы `apply plugin`. Например,
-
-```
-apply plugin: 'com.android.application'
-```
 
 Блок `android` описывает параметры сборки проекта под Android: 
 * `namespace` — уникальный идентификатор пакета приложения для публикации в системе Android.
@@ -370,4 +364,34 @@ apply plugin: 'com.android.application'
 * `versionCode` — кодовое число версии приложения. Используется для идентификации версии приложения в системе Android.
 * `versionName` — текстовое название версии приложения. Версия, которая показывается пользователю.
 * `buildTypes` — блок, описывающий параметры сборки и цифровой подписи приложения.
-* `dependencies` — блок, описывающий зависимости от библиотек, необходимых проекту. Зависимости задаются идентификаторами библиотек в репозиториях, включенных в Gradle-файле проекта.
+* `dependencies` — блок, описывающий зависимости от библиотек, необходимых проекту. Зависимости задаются идентификаторами библиотек в репозиториях, включенных в Gradle-файле проекта, либо также ссылка на объкты в файле `libs.versions.toml`.
+
+Пример описания TOML-объектов в `libs.versions.toml`:
+
+```toml
+[versions]
+agp = "8.8.0"
+kotlin = "1.9.24"
+coreKtx = "1.15.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.0"
+material = "1.10.0"
+activity = "1.8.0"
+constraintlayout = "2.2.0"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+```

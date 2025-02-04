@@ -138,7 +138,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 buildscript {
     ext {
         ...
-        version_navigation = '2.5.0-alpha01'
+        version_navigation = "1.0.0"
         ...
     }
 }
@@ -347,7 +347,7 @@ dependencies {
 Затем необходимо включить плагин в Gradle-файл модуля `app`.
 
 ```gradle
-apply plugin: 'androidx.navigation.safeargs'
+apply plugin: "androidx.navigation.safeargs.kotlin"
 ```
 
 После включения плагина необходимо очистить и пересобрать проект, чтобы компилятор сгенерировал "Directions"-классы, содержащие информацию о навигации между фрагментами (по типу идентификаторов `action_gameFragment_to_gameWonFragment`), а также позволяющие организовать передачу данных между фрагментами.
