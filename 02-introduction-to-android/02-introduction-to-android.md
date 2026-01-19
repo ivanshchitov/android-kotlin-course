@@ -291,7 +291,7 @@ include ':app'
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.android) apply false // Не требуется при использовании Android Gradle Plugin 9.0+
 }
 ```
 
@@ -302,17 +302,17 @@ plugins {
 ```gradle
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.android) // Не требуется при использовании Android Gradle Plugin 9.0+
 }
 
 android {
     namespace 'org.example.diceroller'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "org.example.diceroller"
         minSdk 28
-        targetSdk 35
+        targetSdk 36
         versionCode 1
         versionName "1.0"
 
@@ -328,12 +328,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = '11'
-    }
-    buildFeatures {
-        viewBinding true
     }
 }
 
@@ -353,7 +347,7 @@ dependencies {
 Блок `plugins` описывает ссылки на описание плагинов в файле `libs.versions.toml`, которые должны быть включены в проект:
 
 * `com.android.application` — объявляет проект как Android-приложение.
-* `kotlin-android` — включает использование языка Kotlin для Android-проекта.
+* `kotlin-android` — включает использование языка Kotlin для Android-проекта. Не требует включения при использовании Android Gradle Plugin версии 9.0 и выше, т.к. уже включен в него.
 
 
 Блок `android` описывает параметры сборки проекта под Android: 
@@ -370,16 +364,16 @@ dependencies {
 
 ```toml
 [versions]
-agp = "8.8.0"
-kotlin = "1.9.24"
-coreKtx = "1.15.0"
+agp = "9.0.0" // Версия Android Gradle Plugin
+coreKtx = "1.17.0"
+kotlin = "2.3.0" // Не требуется при использовании Android Gradle Plugin 9.0+
 junit = "4.13.2"
-junitVersion = "1.2.1"
-espressoCore = "3.6.1"
-appcompat = "1.7.0"
-material = "1.10.0"
-activity = "1.8.0"
-constraintlayout = "2.2.0"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+appcompat = "1.7.1"
+material = "1.13.0"
+activity = "1.12.2"
+constraintlayout = "2.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -393,5 +387,5 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" } // Не требуется при использовании Android Gradle Plugin 9.0+
 ```
