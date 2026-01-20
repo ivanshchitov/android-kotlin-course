@@ -138,7 +138,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 buildscript {
     ext {
         ...
-        version_navigation = "1.0.0"
+        version_navigation = "2.9.6"
         ...
     }
 }
@@ -416,7 +416,7 @@ Toast.makeText(context, "NumCorrect: ${args.numCorrect}, NumQuestions: ${args.nu
 Navigation Drawer является частью библиотеки Material, поэтому ее необходимо включить в Gradle-файл:
 
 ```gradle
-implementation "com.google.android.material:material:$version_material"
+implementation "com.google.android.material:material:1.13.0"
 ```
 
 **2. Добавление XML-файла бокового меню:**

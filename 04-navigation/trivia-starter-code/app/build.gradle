@@ -15,17 +15,15 @@
  */
 
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt'
 
 android {
     namespace 'com.example.android.navigation'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId 'com.example.android.navigation'
         minSdk 28
-        targetSdk 35
+        targetSdk 36
         vectorDrawables.useSupportLibrary = true
         versionCode 1
         versionName "1.0"
@@ -34,7 +32,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     buildFeatures {
@@ -46,20 +44,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = '11'
-    }
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    // Kotlin
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22"
     // Constraint Layout
-    implementation "androidx.constraintlayout:constraintlayout:2.2.0"
+    implementation "androidx.constraintlayout:constraintlayout:2.2.1"
     // Core
-    implementation "androidx.core:core-ktx:1.15.0"
+    implementation "androidx.core:core-ktx:1.17.0"
     // Material Design
-    implementation "com.google.android.material:material:1.12.0"
+    implementation "com.google.android.material:material:1.13.0"
     implementation "androidx.navigation:navigation-ui-ktx:$version_navigation"
 }
