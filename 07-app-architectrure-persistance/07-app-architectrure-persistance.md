@@ -46,7 +46,7 @@
 ```gradle
 // Room and Lifecycle dependencies
 implementation "androidx.room:room-runtime:$version_room"
-kapt "androidx.room:room-compiler:$version_room"
+ksp "androidx.room:room-compiler:$version_room"
 implementation "androidx.lifecycle:lifecycle-extensions:$version_lifecycle_extensions"
 
 // Coroutines
