@@ -132,25 +132,13 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
 
 **1. Добавление зависимости Navigation Components:**
 
-Для добавления зависимости необходимо сперва добавить переменную `version_navigation` в блок `ext` в Gradle-файл проекта. Далее эта переменная будет использоваться для добавления зависимости конкретной версии, избавляя от дублирования номера версии в нескольких местах.
-
-```gradle
-buildscript {
-    ext {
-        ...
-        version_navigation = "2.9.6"
-        ...
-    }
-}
-```
-
 Добавление непосредственно зависимостей в Gradle-файл модуля `app`:
 
-```gradle
+```kotlin
 dependencies {
     ...
-    implementation "androidx.navigation:navigation-fragment-ktx:$version_navigation"
-    implementation "androidx.navigation:navigation-ui-ktx:$version_navigation"
+    implementation("androidx.navigation:navigation-fragment-ktx:2.9.6")
+    implementation("androidx.navigation:navigation-ui-ktx:2.9.6")
 }
 ```
 
@@ -337,17 +325,20 @@ override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
 Сперва необходимо добавить зависимость от библиотеки SafeArgs в Gradle-файл проекта (не модуля `app`).
 
-```gradle
-dependencies {
+```kotlin
+plugins {
     ...
-    classpath "androidx.navigation:navigation-safe-args-gradle-plugin:$version_navigation"
+    id("androidx.navigation.safeargs.kotlin") version "2.9.6" apply false
 }
 ```
 
 Затем необходимо включить плагин в Gradle-файл модуля `app`.
 
-```gradle
-apply plugin: "androidx.navigation.safeargs.kotlin"
+```kotlin
+plugins {
+    ...
+    id("androidx.navigation.safeargs.kotlin")
+}
 ```
 
 После включения плагина необходимо очистить и пересобрать проект, чтобы компилятор сгенерировал "Directions"-классы, содержащие информацию о навигации между фрагментами (по типу идентификаторов `action_gameFragment_to_gameWonFragment`), а также позволяющие организовать передачу данных между фрагментами.
@@ -415,8 +406,8 @@ Toast.makeText(context, "NumCorrect: ${args.numCorrect}, NumQuestions: ${args.nu
 
 Navigation Drawer является частью библиотеки Material, поэтому ее необходимо включить в Gradle-файл:
 
-```gradle
-implementation "com.google.android.material:material:1.13.0"
+```kotlin
+implementation("com.google.android.material:material:1.13.0")
 ```
 
 **2. Добавление XML-файла бокового меню:**
@@ -596,7 +587,7 @@ startActivity(shareIntent)
 
 **1. Настройка отображения меню на `GameWonFragment`:**
 
-```
+```kotlin
 // GameWonFragment.onCreate
 
 binding.nextMatchButton.setOnClickListener { view: View ->
