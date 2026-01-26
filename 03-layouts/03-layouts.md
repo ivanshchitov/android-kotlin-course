@@ -247,7 +247,7 @@ Data Binding поможет организовать работу с `View` та
 
 Сперва необходимо включить возможность использования Data Binding. Добавляем в Gradle-файл модуля `app` в блок `android`:
 
-```gradle
+```kotlin
 buildFeatures {
     dataBinding true
 }
@@ -265,7 +265,7 @@ buildFeatures {
 
 Далее переключаемся в `MainActivity` и создаем поле `binding`, которое будет объектом доступа к элементам макета `activity_main`.
 
-```java
+```kotlin
 private lateinit var binding: ActivityMainBinding
 ```
 
@@ -275,7 +275,7 @@ private lateinit var binding: ActivityMainBinding
 
 Для возможности использования Data Binding на уровне класса `MainActivity` необходимо проинициализировать поле `binding` и указать для него макет, данные из которого необходимо использовать:
 
-```java
+```kotlin
 binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 ```
 
@@ -283,7 +283,7 @@ binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
 Теперь можно заменить вызов `findViewById<Button>(R.id.done_button)` для получения экземпляра кнопки на `binding.doneButton`:
 
-```java
+```kotlin
 binding.doneButton.setOnClickListener {
     addNickname(it)
 }
@@ -292,7 +292,7 @@ binding.doneButton.setOnClickListener {
 По сути объект Data Binding предоставляет доступ к объектам интерфейса непосредственно по их идентификаторам.  
 Также можно обновить код метода `addNickname()` с использованием поля `binding`:
 
-```java
+```kotlin
 private fun addNickname(view: View) {
     binding.apply {
         nicknameTextView.text = nicknameEditText.text
