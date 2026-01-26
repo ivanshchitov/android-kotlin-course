@@ -36,7 +36,7 @@ Package: `com.example.android.diceroller`
 Project location: путь до каталога с проектом в файловой системе  
 Language: Kotlin  
 Minimum API: минимальный уровень API (версия Android)  
-Build configuration language: Groovy DSL (build.grandle)  
+Build configuration language: Kotlin DSL (build.grandle.kts)  
 -> Finish
 
 Проект нового приложения создан. Для его запуска необходимо либо подключить реальное Android-устройство, либо установить и запустить эмулятор.
@@ -87,7 +87,7 @@ Verify Configuration -> AVD Name -> pixel2-api28 -> Finish.
 
 Раздел (или каталог) `java` содержит исходный код приложения. При создании нового проекта с пустой активностью создается лишь один файл исходного кода — класс `MainActivity`, содержащий код единственного экрана приложения. Класс `MainActivity` по-умолчанию содержит лишь один переопределенный метод `onCreate()`, наследованный от класса `AppCompatActivity`.
 
-```java
+```kotlin
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
 Ресурсы с разметкой экранов располагаются в каталоге `layout`. Это могут быть ресурсы с разметкой не только экранов, но каких-либо других UI-элементов.  
 Кроме этого среди ресурсов могут содержаться изображения (`drawable`), иконки запуска (`mipmap`), определения цветов (`values/colors.xml`), переводимые строки (`values/strings.xml`), определения тем и стилей элементов приложения (`values/styles.xml`).
 
-Список Gradle-скриптов содержит конфигурационные файлы Gradle `build.gradle`. Один файл принадлежит всему проекту и описывает конфигурацию сборки проекта: репозитории зависимостей, задача очистки проекта. Второй файл принадлежит модулю `app` и описывает конфигурацию сборки конкретного модуля: описание параметров системы Android, зависимости от библиотек. Если проект содержит более, чем один модуль, то и Gradle-файлов он содержит больше — по одному на каждый модуль.
+Список Gradle-скриптов содержит конфигурационные файлы Gradle-сборки `build.gradle.kts`. Один файл принадлежит всему проекту и описывает конфигурацию сборки проекта: репозитории зависимостей, задача очистки проекта. Второй файл принадлежит модулю `app` и описывает конфигурацию сборки конкретного модуля: описание параметров системы Android, зависимости от библиотек. Если проект содержит более, чем один модуль, то и Gradle-файлов он содержит больше — по одному на каждый модуль.
 
 ## Приложение `Dice Roller`
 
@@ -177,13 +177,13 @@ android:id="@+id/roll_button"
 
 **2. Получение экземпляра кнопки по ее идентификатору:**
 
-```java
+```kotlin
 val rollButton: Button = findViewById(R.id.roll_button)
 ```
 
 **3. Установка обработчика события `onClick`:**
 
-```java
+```kotlin
 rollButton.setOnClickListener {
     val randomInt = Random().nextInt(6) + 1
     val resultText: TextView = findViewById(R.id.result_text)
@@ -218,7 +218,7 @@ rollButton.setOnClickListener {
 
 **3. Замена получения экземпляра `TextView` на `ImageView`:**
 
-```java
+```kotlin
 val diceImage: ImageView = findViewById(R.id.dice_image)
 ```
 
@@ -226,7 +226,7 @@ val diceImage: ImageView = findViewById(R.id.dice_image)
 
 По нажатию на кнопку "Roll" необходимо отобразить картинку игрального кубика со сгенерированным числом точек. Для этого необходимо сперва определить правильную ссылку на изображение среди ресурсов с помощью конструкции `when`. После этого необходимо установить полученную ссылку на ресурс для объекта `ImageView` с помощью метода `setImageResource()`.
 
-```java
+```kotlin
 rollButton.setOnClickListener {
     val drawableRes = when (Random.nextInt(1, 6)) {
         1 -> R.drawable.dice_1
@@ -252,17 +252,17 @@ rollButton.setOnClickListener {
 
 Главная задача Gradle — сборка проекта. Gradle в процессе сборки компилирует исходный код (`*java`- и `*kt`-файлы), берет файлы ресурсов, скомпилированный код, манифест (`AndroidManifest.xml`), внешние использующиеся библиотеки, если они есть, и упаковывает все эти файлы в один APK-файл (Android Application Package) — исполняемый формат файлов для распространения Android-приложений.
 
-В каждом проекте располагается как минимум два конфигурационных файла Gradle. Каждый обладает именем `build.gradle`. Один из файлов располагается в корне проекта и является конфигурационным файлом всего проекта. Второй располагается в корне модуля `app` и является соответственно конфигурационным файлов модуля. Если проект содержит больше чем 1 модуль, то и Gradle-файлов модулей больше — по одному на каждый модуль.
+В каждом проекте располагается как минимум два конфигурационных файла Gradle. Каждый обладает именем `build.gradle.kts`. Один из файлов располагается в корне проекта и является конфигурационным файлом всего проекта. Второй располагается в корне модуля `app` и является соответственно конфигурационным файлов модуля. Если проект содержит больше чем 1 модуль, то и Gradle-файлов модулей больше — по одному на каждый модуль.
 
 Gradle-файл проекта определяет репозитории и зависимости общие для всех модулей в проекте.  
 Репозитории — хранилища, в которых будут искаться добавляемые зависимости.  
 Зависимости — библиотеки или инструменты, которые необходимы для работы проекта.
 
-Также часть конфигурации проекта располагается в файле `settings.gradle`.
+Также часть конфигурации проекта располагается в файле `settings.gradle.kts`.
 
-Код ниже демонстрирует файл проекта `settings.gradle`, создающийся по-умолчанию. Здесь описаны репозитории `google()`, `mavenCentral()` и `gradlePluginPortal()`, использующиеся для доступа к плагинам и зависимостям во всех модулях проекта. 
+Код ниже демонстрирует файл проекта `settings.gradle.kts`, создающийся по-умолчанию. Здесь описаны репозитории `google()`, `mavenCentral()` и `gradlePluginPortal()`, использующиеся для доступа к плагинам и зависимостям во всех модулях проекта. 
 
-```gradle
+```kotlin
 pluginManagement {
     repositories {
         google()
@@ -278,68 +278,69 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Dice Roller"
-include ':app'
+include(":app")
 ```
 
 Блок `pluginManagement {}` описывает список репозиториев для загрузки плагинов для использования в рамках проекта.  
 Блок `dependencyResolutionManagement {}` описывает список репозиториев для загрузки библиотек зависимостей для использования в рамках проекта и его модулей.
 Также здесь описывается имя проекта `rootProject.name` и список модулей. В данном примере лишь один модуль `:app`, но если бы их было больше, они бы были перечислены через запятую.
 
-Пример файла `build.gradle` проекта описывает объявления плагинов для сборки и разработки.
+Пример файла `build.gradle.kts` проекта описывает объявления плагинов для сборки и разработки.
 
-```gradle
+```kotlin
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false // Не требуется при использовании Android Gradle Plugin 9.0+
 }
 ```
 
-Здесь `libs.plugins.android.application` и `libs.plugins.kotlin.android` — ссылки на объекты, описанные в файле `libs.versions.toml`.
+Здесь `libs.plugins.android.application` — ссылка на объект, описанный в файле `libs.versions.toml`.
 
-Пример `build.gradle` для модуля `app` представлен ниже.
+Пример `build.gradle.kts` для модуля `app` представлен ниже.
 
-```gradle
+```kotlin
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android) // Не требуется при использовании Android Gradle Plugin 9.0+
 }
 
 android {
-    namespace 'org.example.diceroller'
-    compileSdk 36
+    namespace = "org.example.diceroller"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId "org.example.diceroller"
-        minSdk 28
-        targetSdk 36
-        versionCode 1
-        versionName "1.0"
+        applicationId = "org.example.diceroller"
+        minSdk = 28
+        targetSdk = 36
+        versionCode = 1
+        versionName = "1.0"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 }
 
 dependencies {
-    implementation libs.androidx.core.ktx
-    implementation libs.androidx.appcompat
-    implementation libs.material
-    implementation libs.androidx.activity
-    implementation libs.androidx.constraintlayout
-    testImplementation libs.junit
-    androidTestImplementation libs.androidx.junit
-    androidTestImplementation libs.androidx.espresso.core
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.constraintlayout)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
 ```
 
@@ -347,7 +348,6 @@ dependencies {
 Блок `plugins` описывает ссылки на описание плагинов в файле `libs.versions.toml`, которые должны быть включены в проект:
 
 * `com.android.application` — объявляет проект как Android-приложение.
-* `kotlin-android` — включает использование языка Kotlin для Android-проекта. Не требует включения при использовании Android Gradle Plugin версии 9.0 и выше, т.к. уже включен в него.
 
 
 Блок `android` описывает параметры сборки проекта под Android: 
@@ -366,7 +366,6 @@ dependencies {
 [versions]
 agp = "9.0.0" // Версия Android Gradle Plugin
 coreKtx = "1.17.0"
-kotlin = "2.3.0" // Не требуется при использовании Android Gradle Plugin 9.0+
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
@@ -387,5 +386,4 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" } // Не требуется при использовании Android Gradle Plugin 9.0+
 ```

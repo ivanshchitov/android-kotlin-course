@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-include ':app'
-rootProject.name='Dice Roller'
+rootProject.name = "Dice Roller"
+include(":app")
