@@ -73,8 +73,8 @@ MVVM (Model-View-ViewModel) — это шаблон построения арх�
 
 Сперва необходимо добавить зависимость от `lifecycle-extensions`, модуля библиотеки Lifecycle Library, содержащего класс `ViewModel`.
 
-```gradle
-implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+```kotlin
+implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 ```
 
 **2. Создание класса `GameViewModel`:**
