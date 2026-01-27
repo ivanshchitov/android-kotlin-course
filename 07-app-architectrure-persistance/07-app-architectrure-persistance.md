@@ -43,15 +43,15 @@
 
 В Gradle-файле модуля `app` уже включены все необходимые зависимости: Room, Lifecycle Library, Coroutines.
 
-```gradle
+```kotlin
 // Room and Lifecycle dependencies
-implementation "androidx.room:room-runtime:$version_room"
-ksp "androidx.room:room-compiler:$version_room"
-implementation "androidx.lifecycle:lifecycle-extensions:$version_lifecycle_extensions"
+implementation("androidx.room:room-runtime:2.8.4")
+ksp("androidx.room:room-compiler:2.8.4")
+implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
 // Coroutines
-implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version_coroutine"
-implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$version_coroutine"
+implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 ```
 
 Код приложения сгруппирован в каталогах по функциональности. В каталоге `sleeptracker` содержатся классы, относящиеся к начальному экрану "Sleep Tracker". В каталоге `sleepquality` содержатся классы для функционала экрана "Sleep Quality". В каталоге `database` содержатся классы для работы с БД. Изначально они пустые.
